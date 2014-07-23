@@ -1,0 +1,484 @@
+/*
+ Description:   Another JavaScript Engine
+ Author List [most recent active month] URI:
+    * Stephen T. Robbins [2014-07] http://www.linkedin.com/profile/view?id=24352342
+ Version: 0.1.0
+ File Dependencies:
+ 	* jQuery >= 2.1.1
+ 	* jQuery UI >= 1.10.4
+ 	* Moment.js >= 2.7.0 |OR| Intl.DateTimeFormat
+ 	* Numeral.js >= 1.5.3 |OR| Intl.NumberFormat
+*/
+/* -- Known Issues, Suggested Updates/Improvements, and Notices --
+	UPDATE: When more widely supported, use Intl.NumberFormat instead of Numeral.js
+	UPDATE: When more widely supported, use Intl.DateTimeFormat instead of Moment.js
+	UPDATE: Replace or supplement anje.utility with util-x by Xotic750 https://github.com/Xotic750/util-x/blob/master/src/util-x.js
+	IMPROVE: Functions which begin with an '_'underscore should be made properly private
+	IMPROVE: Add functionality supporting the sorting of arrays to anje.ui.template._expandTemplate()
+	ISSUE: There needs to be better handling for what to do with a template when its model data is empty (null object or array).
+*/
+
+/* Table of Contents:
+	0.0 Native Prototype Modification
+	1.0 Utility
+	2.0 Data Manipulation
+	3.0 UI
+		3.1 Cross Browser
+		3.2 View Management
+		3.3 Templating
+* -----------------------------------------------------------------------------
+*/
+
+var anje = {};
+anje.appurl = window.location.host;
+
+
+
+/**
+ * 0.0 Native Prototype Modification
+ * -----------------------------------------------------------------------------
+**/
+
+// Array Remove - By John Resig (MIT Licensed)
+Array.prototype.remove = function(from, to) {
+	var rest = this.slice((to || from) + 1 || this.length);
+	this.length = from < 0 ? this.length + from : from;
+	return this.push.apply(this, rest);
+}; // end Array.prototype.remove()
+
+
+
+/**
+ * 1.0 Utility
+ * -----------------------------------------------------------------------------
+**/
+ anje.utility = {};
+
+
+/** isEmpty() takes any variable and returns whether or not it is empty as a boolean.
+ * @param variable -- any-type - a variable which may or may not be empty.
+ * @return bool - whether or not the variable is empty.
+**/
+anje.utility.isEmpty = function (variable) {
+	if(  (variable === undefined)
+	  || (typeof variable === "undefined"))
+	{ return true; }
+	if(  (variable === null)
+	  || (variable === false)
+	  || (variable === 0)
+	  || (variable === "0")
+	  || (variable === ""))
+	{ return true; }
+
+	// This is necessary because Arrays will have "remove" as a key due to Array.prototype.remove() added in section 0.0 Native Prototype Modification.
+	if (Array.isArray(variable) && variable.length == 0) {
+		return true;
+	}
+
+	if (typeof variable == "object")
+	{
+		for(var key in variable)
+		{   // These include attributes, children, array elements, etc.
+			return false;
+		}
+		return true;
+	}
+	return false;
+}; // end anje.utility.isEmpty()
+
+
+/** saveTextAsFile() accepts input text and downloads it as a plain text file to the user/client.
+ * @param textToSave -- string - the text to save as a text file.
+ * @param suggestedFileName -- string - (optional) a suggested name to save the text file as.
+**/
+anje.utility.saveTextAsFile = function (textToSave, suggestedFileName) {
+    var textFileAsBlob = new Blob([textToSave], {type:'text/plain'});
+    if (utilityJS.isEmpty(suggestedFileName)) { suggestedFileName = ''; }
+
+    var downloadLink = document.createElement('a');
+    downloadLink.download = suggestedFileName;
+    downloadLink.innerHTML = 'Download File';
+    if (window.webkitURL != null) {
+        // Chrome allows the link to be clicked
+        // without actually adding it to the DOM.
+        downloadLink.href = window.webkitURL.createObjectURL(textFileAsBlob);
+    } else {
+        // Firefox requires the link to be added to the DOM
+        // before it can be clicked.
+        downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
+        downloadLink.onclick = function () { this.remove(); };
+        downloadLink.style.display = 'none';
+        document.body.appendChild(downloadLink);
+    }
+
+    downloadLink.click();
+}; // end saveTextAsFile()
+
+
+/** getArrayIndexByKeyValue()
+ * @param array -- array - the array to search.
+ * @param key -- string - the key which the found object must have.
+ * @param value -- any - the value which the key must contain.
+ * @return integer - the index of the first object with a key+value matching the input, or -1 if none found.
+**/
+anje.utility.getArrayIndexByKeyValue = function(array, key, value) {
+	for (var i = 0; i < array.length; i++) {
+		if (array[i][key] == value) {
+			return i;
+		}
+	}
+	return -1;
+}; // end anje.utility.getArrayIndexByKeyValue()
+
+
+/** getRandomInteger() generates a random integer from a specified range.
+ * @param max -- integer - optional - high end of the range; 2147483647 if omitted.
+ * @param min -- integer - optional - the low end of the range; 0 if omitted.
+ * @return integer - a randomly generated integer bounded by the range.
+ */
+anje.utility.getRandomInteger = function (max, min) {
+	if(max == null || max == undefined) { max = 2147483647; }
+	if(min == null || min == undefined) { min = 0; }
+	return Math.floor(Math.random() * (max - min + 1)) + min;
+}; // end rand_int()
+
+
+
+/**
+ * 2.0 Data Manipulation
+ * -----------------------------------------------------------------------------
+**/
+anje.data = {};
+
+
+/** get() Gets the data specified by a path from a data source. Executes functions to step into their resolved value.
+ * @param src -- string - a string path used to traverse the data source and return an interior value.
+ * @param data_source -- object - (optional) the data source to get data out of; defaults to window.
+ * @return any-type - the value specified by the path from inside the data source, or undefined.
+**/
+anje.data.get = function (src, data_source) {
+	if (data_source === undefined) { data_source = window; }
+	// Remove the trailing '(comma,separated,list)' of attributes to return, if there is one.
+	var split_src = src.split('(');
+	var attributes_string = split_src[1];
+	var target = split_src[0];
+	var path = target.split('.');
+	// TODO : make this into a path.forEach()
+	path.forEach(function (step) {
+		if (data_source === undefined || data_source === null) { return undefined; }
+
+		// Step into an array, if specified:
+		if (step.indexOf('[') != -1) {
+			var split_step = step.split('[');
+			var array = split_step[0];
+			var index = split_step[1].substr(0, split_step[1].length-1)
+			data_source = data_source[array];
+			if (data_source === undefined || data_source === null) { return undefined; }
+			data_source = data_source[index];
+		} else if (typeof data_source[step] === 'function') {
+			data_source = data_source[step]();
+		} else {
+			data_source = data_source[step];
+		}
+	});
+	if (anje.utility.isEmpty(data_source) || attributes_string === undefined || attributes_string === ')') {
+		// If our data source is empty or no attributes were specified, then return the data as-is.
+		return data_source;
+	} else {
+		var return_value;
+		// Get the array of specified attributes.
+		attributes_string = attributes_string.split(')')[0];
+		var attributes = attributes_string.split(',');
+		// Return the same type as the data_source.
+		if (Array.isArray(data_source)) {
+			return_value = [];
+			data_source.forEach(function(element) {
+				var item = {};
+				attributes.forEach(function(attribute) {
+					item[attribute] = element[attribute];
+				});
+				return_value.push(item);
+			});
+		} else {
+			return_value = {};
+			attributes.forEach(function(attribute) {
+				return_value[attribute] = data_source[attribute];
+			});
+		}
+		return return_value;
+	}
+}; // end anje.data.get()
+
+
+
+/**
+ * 3.0 UI
+ * -----------------------------------------------------------------------------
+**/
+anje.ui = {};
+
+
+/**
+ * 3.1 Cross Browser
+ * -----------------------------------------------------------------------------
+**/
+anje.ui.crossbrowser = {};
+
+// Adapted from https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Using_full_screen_mode
+anje.ui.crossbrowser.requestFullscreen = function () {
+	if (document.documentElement.requestFullscreen) {
+		document.documentElement.requestFullscreen();
+	} else if (document.documentElement.msRequestFullscreen) {
+		document.documentElement.msRequestFullscreen();
+	} else if (document.documentElement.mozRequestFullScreen) {
+		document.documentElement.mozRequestFullScreen();
+	} else if (document.documentElement.webkitRequestFullscreen) {
+		document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+	}
+} // end anje.ui.crossbrowser.requestFullscreen()
+anje.ui.crossbrowser.exitFullscreen = function () {
+	if (document.exitFullscreen) {
+		document.exitFullscreen();
+	} else if (document.msExitFullscreen) {
+		document.msExitFullscreen();
+	} else if (document.mozCancelFullScreen) {
+		document.mozCancelFullScreen();
+	} else if (document.webkitExitFullscreen) {
+		document.webkitExitFullscreen();
+	}
+} // end anje.ui.crossbrowser.exitFullscreen()
+anje.ui.crossbrowser.toggleFullScreen = function () {
+	if (!document.fullscreenElement &&        // alternative standard method
+			!document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement ) {    // current working methods
+		anje.ui.crossbrowser.requestFullscreen();
+	} else {
+		anje.ui.crossbrowser.exitFullscreen();
+	}
+} // end anje.ui.crossbrowser.toggleFullScreen()
+
+
+
+/**
+ * 3.0 View Management
+ * -----------------------------------------------------------------------------
+**/
+anje.ui.view = {};
+
+anje.ui.view.switch = function (viewname, view) {
+	var viewToGet = view;
+	if (anje.utility.isEmpty(view)) { viewToGet = viewname + '.html'; }
+	$.ajax({
+		type: 'GET',
+		url: '/game/ui/views/' + viewToGet,
+		success: function(data) {
+			// TODO: Cache the retrieved view to reduce bandwidth requirements and improve responsiveness.
+			$('#ui-game').html(data);
+			if (anje.utility.isEmpty(anje.ui.tempdata)) { anje.ui.tempdata = {}; }
+			anje.ui.tempdata.current_view = viewname;
+		},
+		fail: function(jqXHR, textStatus, errorThrown) {
+			if (anje.utility.isEmpty(view)) {
+				anje.ui.view.switch(viewname, viewname + '.php');
+			}
+		}
+	});
+}; // end anje.ui.view.switch()
+
+
+
+/**
+ * 4.0 Templating
+ * -----------------------------------------------------------------------------
+**/
+anje.ui.template = {};
+
+anje.ui.template._expandTemplate = function ($element, model) {
+	// anje.ui.template._expandTemplate() only works if model is an array.
+	if (!Array.isArray(model)) {
+		console.log($element);
+		console.log(model);
+		throw 'ERROR: model is not an array.';
+		return;
+	}
+
+	// anje.ui.template._expandTemplate() only works if $element has had its child_template set.
+	var child_template = $element.data('child_template');
+	if (anje.utility.isEmpty(child_template)) {
+		console.log($element);
+		console.log(model);
+		throw 'ERROR: $element is missing its child template.';
+		return;
+	}
+	var $child_template = $(child_template);
+
+	// Replicate the template once per item in the model array, setting the child template's model attribute along the way.
+	model.forEach(function (array_element, array_index) {
+		var $templateCopy = $child_template.clone();
+		$templateCopy.children().each(function (child_index, child) {
+			var $child = $(child);
+			var childModel = $child.data('model') || '';
+			$child.attr('data-model', '.' + array_index + childModel);
+			$child.attr('data-index', array_index);
+		});
+		$element.append($templateCopy.html());
+	});
+}; // end anje.ui.template._expandTemplate()
+
+anje.ui.template._formattedContent = function ($element, model) {
+	// This only works if model is a value! Throw an exception if it is not.
+	if (!(typeof model === 'boolean' || typeof model === 'number' || typeof model === 'string')) {
+		console.log($element);
+		console.log(model);
+		throw 'ERROR: model is not a value.';
+		return;
+	}
+
+	// If a format is specified then use it to format the model.
+	switch (typeof model) {
+		case 'boolean':
+			// TODO: Support selecting a child template based on a boolean (or switch-case?) value.
+
+			$element.html(model); // unformatted boolean
+			break;
+		case 'number':
+			var numeralFormat = $element.data('numeral-format');
+			var momentFormat = $element.data('moment-format');
+			if (!anje.utility.isEmpty(numeralFormat)) {
+				// model is a number; fall back to formatting using Numeral.js
+				$element.html(numeral(model).format(numeralFormat));
+			} else if (!anje.utility.isEmpty(momentFormat)) {
+				// model is a timestamp; format using Moment.js
+				$element.html(moment(model).format(momentFormat));
+			} else {
+				$element.html(model); // unformatted number
+			}
+			break;
+		case 'string':
+			var momentFormat = $element.data('moment-format');
+			if (!anje.utility.isEmpty(momentFormat)) {
+				$element.html(moment(model).format(momentFormat));
+			} else {
+				$element.html(model); // unformatted string
+			}
+			break;
+	}
+}; // end anje.ui.template._formattedContent()
+
+anje.ui.template._populateAttributes = function ($element, parent_model) {
+	// Use all "data-attr-..." attributes to reset dynamic attributes to their {{}} brace-containing state.
+	$.each($element[0].attributes, function() {
+		var attribute = this;
+		if(attribute.specified && attribute.name.indexOf('data-attr-') === 0) {
+			var attrName = attribute.name.substring(10);
+			var attrInitialValue = $element.data('attr-' + attrName);
+			$element.attr(attrName, attrInitialValue);
+		}
+	});
+	// Traverse all attributes, replacing {{.model.path}} with such data wherever double-braces are encountered.
+	$.each($element[0].attributes, function() {
+		var attribute = this;
+		// Skip the data initial-value attributes!
+		if(attribute.specified && attribute.name.indexOf('data-attr-') === -1) {
+			// Search the attribute value for {{.model}}
+			var newValue = attribute.value;
+			var indexOpen = newValue.indexOf('{{');
+			var indexClose = newValue.indexOf('}}');
+			if(indexOpen > -1 && indexClose > -1) {
+				// Store the attribute's initial value in the element's data.
+				$element.data('attr-' + attribute.name, attribute.value);
+
+				// Make the value replacement(s).
+				while (indexOpen > -1 && indexClose > -1) {
+					var model_path = newValue.substring(indexOpen+2, indexClose);
+					var model;
+					if (model_path.substring(0,1) === '.') {
+						model = anje.data.get(model_path.substr(1), parent_model);
+					} else {
+						model = anje.data.get(model_path);
+					}
+					if (typeof model === 'boolean' || typeof model === 'number' || typeof model === 'string') {
+						// Value type attributes indicate population with that data, formatted as instructed.
+						newValue = newValue.replace('{{'+model_path+'}}', model.toString());
+					} else {
+						console.log($element);
+						console.log(parent_model);
+						console.log(model_path);
+						console.log(attribute.name);
+						console.log(model);
+						throw 'ERROR: anje.ui.template._populateAttributes() broke; it cannot operate on a model which is not a value type.';
+					}
+					indexOpen = newValue.indexOf('{{');
+					indexClose = newValue.indexOf('}}');
+				}
+				$element.attr(attribute.name, newValue);
+			}
+		}
+	});
+}; // end anje.ui.template._populateAttributes()
+
+anje.ui.template.populate = function ($element, parent_model) {
+	// Get the model for the current element of the DOM.
+	var model_path = $element.data('model');
+	var model;
+	if (anje.utility.isEmpty(model_path)) {
+		model = parent_model;
+	} else if (model_path.substring(0,1) === '.') {
+		model = anje.data.get(model_path.substr(1), parent_model);
+	} else {
+		model = anje.data.get(model_path);
+
+		// Handle the template for the current element of the DOM.
+		var template = $element.data('template');
+		if (anje.utility.isEmpty(template)) {
+			// Save the template if it is new.
+			$element.data('template', $element.html());
+			template = $element.data('template');
+		}
+		// Reset the template.
+		$element.html(template);
+	}
+
+	// Handle population of the element's attributes.
+	anje.ui.template._populateAttributes($element, model);
+
+	// An array type attribute indicates the *initial* html() of $element is a template *for each item in the array*!
+	// Handle the child template for the current element of the DOM.
+	if (Array.isArray(model)) {
+		// Retrieve and use the child template, or save then use it if new.
+		var child_template = $element.data('child_template');
+		if (anje.utility.isEmpty(child_template)) {
+			$element.data('child_template', $element[0].outerHTML);
+		}
+
+		if (model.length > 0) {
+			// Clear the contents because they are out of date or an unpopulated template.
+			$element.html('');
+			// Copy and populate the template once for each item in the model array.
+			anje.ui.template._expandTemplate($element, model);
+		} else {
+			// The array is empty.
+			// TODO : Handle empty arrays more nicely?
+		}
+	}
+
+	if (typeof model === 'function') {
+		throw 'ERROR: anje.data.get() broke. anje.ui.template.populate() cannot operate on a model which is a function.';
+	}
+
+	// If model is defined then populate this element.
+	if (typeof model === 'boolean' || typeof model === 'number' || typeof model === 'string') {
+		// Value type attributes indicate population with that data, formatted as instructed.
+		$element.html(anje.ui.template._formattedContent($element, model));
+	} else if (anje.utility.isEmpty(model)) {
+		// If model is empty then display "none" instead. This should only occur for missing objects and empty arrays.
+		$element.html('none');
+		// This assignment of html() necessarily makes this a final leaf node, so no further traversal of children is possible or necessary.
+		return;
+	}
+
+	// Recurse over all children of $element to complete population.
+	// This should happen any time there could be children, which is any time no 'attr' was specified.
+	$element.children().each(function () {
+		anje.ui.template.populate($(this), model);
+	});
+}; // end anje.ui.template.populate()
