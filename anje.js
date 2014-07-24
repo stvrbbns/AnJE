@@ -10,12 +10,12 @@
  	* Numeral.js >= 1.5.3 |OR| Intl.NumberFormat
 */
 /* -- Known Issues, Suggested Updates/Improvements, and Notices --
+	ISSUE: There needs to be better handling for what to do with a template when its model data is empty (null object or array).
 	UPDATE: When more widely supported, use Intl.NumberFormat instead of Numeral.js
 	UPDATE: When more widely supported, use Intl.DateTimeFormat instead of Moment.js
 	UPDATE: Replace or supplement anje.utility with util-x by Xotic750 https://github.com/Xotic750/util-x/blob/master/src/util-x.js
 	IMPROVE: Functions which begin with an '_'underscore should be made properly private
 	IMPROVE: Add functionality supporting the sorting of arrays to anje.ui.template._expandTemplate()
-	ISSUE: There needs to be better handling for what to do with a template when its model data is empty (null object or array).
 */
 
 /* Table of Contents:
@@ -264,14 +264,15 @@ anje.ui.crossbrowser.toggleFullScreen = function () {
 **/
 anje.ui.view = {};
 
+// NOTICE: Never cache the results of this function. Templates should be repopulated instead if that is the desired effect.
 anje.ui.view.switch = function (viewname, view) {
 	var viewToGet = view;
 	if (anje.utility.isEmpty(view)) { viewToGet = viewname + '.html'; }
 	$.ajax({
 		type: 'GET',
 		url: '/game/ui/views/' + viewToGet,
+		cache: false;
 		success: function(data) {
-			// TODO: Cache the retrieved view to reduce bandwidth requirements and improve responsiveness.
 			$('#ui-game').html(data);
 			if (anje.utility.isEmpty(anje.ui.tempdata)) { anje.ui.tempdata = {}; }
 			anje.ui.tempdata.current_view = viewname;
