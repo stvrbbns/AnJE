@@ -60,10 +60,10 @@ Array.prototype.remove = function(from, to) {
  * @return bool - whether or not the variable is empty.
 **/
 anje.utility.isEmpty = function (variable) {
-	if(  (variable === undefined)
+	if (  (variable === undefined)
 	  || (typeof variable === "undefined"))
 	{ return true; }
-	if(  (variable === null)
+	if (  (variable === null)
 	  || (variable === false)
 	  || (variable === 0)
 	  || (variable === "0")
@@ -137,8 +137,8 @@ anje.utility.getArrayIndexByKeyValue = function(array, key, value) {
  * @return integer - a randomly generated integer bounded by the range.
  */
 anje.utility.getRandomInteger = function (max, min) {
-	if(max == null || max == undefined) { max = 2147483647; }
-	if(min == null || min == undefined) { min = 0; }
+	if (max == null || max == undefined) { max = 2147483647; }
+	if (min == null || min == undefined) { min = 0; }
 	return Math.floor(Math.random() * (max - min + 1)) + min;
 }; // end rand_int()
 
@@ -259,7 +259,7 @@ anje.ui.crossbrowser.toggleFullScreen = function () {
 
 
 /**
- * 3.0 View Management
+ * 3.2 View Management
  * -----------------------------------------------------------------------------
 **/
 anje.ui.view = {};
@@ -270,10 +270,10 @@ anje.ui.view.switch = function (viewname, view) {
 	if (anje.utility.isEmpty(view)) { viewToGet = viewname + '.html'; }
 	$.ajax({
 		type: 'GET',
-		url: '/game/ui/views/' + viewToGet,
-		cache: false;
+		url: '/game/ui/views/' + viewToGet, // TODO: update to make use of anje.appurl correctly.
+		cache: false,
 		success: function(data) {
-			$('#ui-game').html(data);
+			$('#ui-app').html(data);
 			if (anje.utility.isEmpty(anje.ui.tempdata)) { anje.ui.tempdata = {}; }
 			anje.ui.tempdata.current_view = viewname;
 		},
@@ -288,7 +288,7 @@ anje.ui.view.switch = function (viewname, view) {
 
 
 /**
- * 4.0 Templating
+ * 3.3 Templating
  * -----------------------------------------------------------------------------
 **/
 anje.ui.template = {};
@@ -319,7 +319,9 @@ anje.ui.template._expandTemplate = function ($element, model) {
 			var $child = $(child);
 			var childModel = $child.data('model') || '';
 			$child.attr('data-model', '.' + array_index + childModel);
+			$child.data('model', '.' + array_index + childModel);
 			$child.attr('data-index', array_index);
+			$child.data('index', array_index);
 		});
 		$element.append($templateCopy.html());
 	});
@@ -369,23 +371,33 @@ anje.ui.template._populateAttributes = function ($element, parent_model) {
 	// Use all "data-attr-..." attributes to reset dynamic attributes to their {{}} brace-containing state.
 	$.each($element[0].attributes, function() {
 		var attribute = this;
-		if(attribute.specified && attribute.name.indexOf('data-attr-') === 0) {
+		if (attribute.specified && attribute.name.indexOf('data-attr-') === 0) {
 			var attrName = attribute.name.substring(10);
 			var attrInitialValue = $element.data('attr-' + attrName);
+			if (attrInitialValue == undefined) {
+				// Sometimes the data and attribute get out of sync. Look for the latter if the former isn't found.
+				attrInitialValue = $element.attr('data-attr-' + attrName);
+			}
 			$element.attr(attrName, attrInitialValue);
+			if (attrName.indexOf('data-') === 0) {
+				// Sometimes the data and attribute get out of sync.
+				// If this is a data attribute, then also set its data in order to try and keep them in sync.
+				$element.data(attrName.substring(5), attrInitialValue);
+			}
 		}
 	});
 	// Traverse all attributes, replacing {{.model.path}} with such data wherever double-braces are encountered.
 	$.each($element[0].attributes, function() {
 		var attribute = this;
 		// Skip the data initial-value attributes!
-		if(attribute.specified && attribute.name.indexOf('data-attr-') === -1) {
+		if (attribute.specified && attribute.name.indexOf('data-attr-') === -1) {
 			// Search the attribute value for {{.model}}
 			var newValue = attribute.value;
 			var indexOpen = newValue.indexOf('{{');
 			var indexClose = newValue.indexOf('}}');
-			if(indexOpen > -1 && indexClose > -1) {
+			if (indexOpen > -1 && indexClose > -1) {
 				// Store the attribute's initial value in the element's data.
+				$element.attr('data-attr-' + attribute.name, attribute.value);
 				$element.data('attr-' + attribute.name, attribute.value);
 
 				// Make the value replacement(s).
@@ -412,6 +424,9 @@ anje.ui.template._populateAttributes = function ($element, parent_model) {
 					indexClose = newValue.indexOf('}}');
 				}
 				$element.attr(attribute.name, newValue);
+				if (attribute.name.indexOf('data-') === 0) {
+					$element.data(attribute.name.substring(5), newValue);
+				}
 			}
 		}
 	});
