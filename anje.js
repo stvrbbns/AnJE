@@ -21,7 +21,11 @@
 /* Table of Contents:
 	0.0 Native Prototype Modification
 	1.0 Utility
-	2.0 Data Manipulation
+	2.0 Data
+		2.1 Data Access
+		2.2 Protoclassing
+		2.3 Modularization
+			2.3.1 Module class
 	3.0 UI
 		3.1 Cross Browser
 		3.2 View Management
@@ -31,6 +35,7 @@
 
 var anje = {};
 anje.appurl = window.location.host;
+var appdata = {}; // The root node for all application data.
 
 
 
@@ -228,12 +233,17 @@ anje.utility.makeGetterFunction = function (val) {
 
 
 /**
- * 2.0 Data Manipulation
+ * 2.0 Data
  * -----------------------------------------------------------------------------
 **/
 anje.data = {};
 
 
+/**
+ * 2.1 Data Access
+ * -----------------------------------------------------------------------------
+**/
+anje.data = {};
 /** get() Gets the data specified by a path from a data source. Executes functions to step into their resolved value.
  * @param src -- string - a string path used to traverse the data source and return an interior value.
  * @param data_source -- object - (optional) the data source to get data out of; defaults to window.
@@ -291,6 +301,145 @@ anje.data.get = function (src, data_source) {
 		return return_value;
 	}
 }; // end anje.data.get()
+
+
+
+/**
+ * 2.2 Protoclassing
+ * -----------------------------------------------------------------------------
+**/
+anje.data.class = {};
+appdata.class = {}; // associative array of protoclasses
+
+anje.data.class.newObject = function (objectClass, options, initData) {
+	if (options == undefined) { options = {}; }
+	var o = new appdata.class[objectClass](options);
+	if (!anje.utility.isEmpty(initData)) {
+		$.extend(true, o, initData);
+	}
+	return o;
+}; // end anje.data.class.newObject()
+
+anje.data.class.loadObject = function (objectInfo) {
+	if (typeof objectInfo === 'function' || typeof objectInfo === 'boolean' || typeof objectInfo === 'number' || typeof objectInfo === 'string') {
+		return objectInfo;
+	} else if (anje.utility.isEmpty(objectInfo)) {
+		return objectInfo;
+	} else if (Array.isArray(objectInfo)) {
+		var returnObject = [];
+		for (var i = 0; i < objectInfo.length; i++) {
+			returnObject.push(anje.data.class.loadObject(objectInfo[i]));
+		};
+		return returnObject;
+	} else { // This must be a non-array Object.
+		var loadedObjectInfo = {};
+		for (var property in objectInfo) {
+			if (property == 'protoclass' || property == '_options') { continue; } // skip the protoclass and initialization options for protoclassed objects
+			if (property == '_comment' || property == '_comments') { continue; } // skip internal comments
+			loadedObjectInfo[property] = anje.data.class.loadObject(objectInfo[property]);
+		}
+		if (anje.utility.isEmpty(objectInfo.protoclass)) {
+			return loadedObjectInfo;
+		} else {
+			return anje.data.class.newObject(objectInfo.protoclass, objectInfo._options, loadedObjectInfo);
+		}
+	}
+}; // end anje.data.class.loadObject()
+
+
+
+/**
+ * 2.3 Modularization
+ * -----------------------------------------------------------------------------
+**/
+anje.data.module = {};
+appdata.encyclopedia = {}; // The root node all Module content is installed into.
+appdata.installedModules = []; // String array naming all installed modules.
+
+anje.data.module.resetApp = function () {
+	appdata.encyclopedia = {};
+	appdata.installedModules = [];
+}; // end qis.app.module.resetApp()
+
+anje.data.module.install = function (moduleURL) {
+	var moduleObject = null;
+	jQuery.get(moduleURL, null, function (moduleData) {
+		// TODO: Validate the module.json ?
+		moduleObject = anje.data.class.newObject(moduleData.protoclass, null, moduleData);
+
+		// TODO: account for module dependencies; install them first
+		//window.appdata.module.loadDependencies();
+
+		moduleObject.install();
+	}, 'json');
+	return moduleObject;
+}; // end qis.app.module.install()
+
+anje.data.module.addToEncyclopedia = function (data, target) {
+	if (target === undefined) { target = appdata.encyclopedia; }
+	if (data == undefined || typeof data != 'object') { throw 'SERIOUS WARNING: Module contains value-type content outside of content objects.'; }
+	// data should now be confirmed as an array (ordered or associative) used to structure Module content;
+	// Copy the Module structure into the target and set up Getters for all non-structure content.
+	for(var key in data)
+	{
+		if (key == '_comment' || key == '_comments') { continue; }
+		if (data[key].protoclass === undefined && data[key]._options === undefined) {
+			// Everything without a protoclass should be structural.
+			if (target[key] === undefined) {
+				if (Array.isArray(data[key])) {
+					target[key] = [];
+				} else {
+					target[key] = {};
+				}
+			}
+			anje.data.module.addToEncyclopedia(data[key], target[key]);
+		} else {
+			// Everything with a protoclass is, by definition, non-structure content.
+			var content = anje.data.class.loadObject(data[key]);
+			target.__defineGetter__(key, anje.utility.makeGetterFunction(content));
+		}
+	}
+}; // end anje.data.module.addToEncyclopedia()
+
+anje.data.module.getFromEncyclopedia = function (path, targetObject) {
+	var content = anje.data.get(path, appdata.encyclopedia);
+	if (targetObject == undefined) {
+		return anje.data.class.loadObject(content);
+	}
+	if (!anje.utility.isEmpty(content)) {
+		$.extend(true, targetObject, anje.data.class.loadObject(content));
+	}
+	return targetObject;
+}; // end anje.data.module.getFromEncyclopedia()
+
+
+
+/**
+ * 2.3.1 Module class
+ * -----------------------------------------------------------------------------
+**/
+
+/*** Module - Constructor ***/
+appdata.class.Module = function () {
+	this.__defineGetter__('protoclass', function () { return 'Module'; });
+	this.module_dependencies = []; // String - module names
+	this.name = '';
+	this.directoryName = '';
+	this.content = {}; // associative array structure of content to add to the appdata.encyclopedia
+}; // end constructor() qis.class.Module
+
+/*** Module - Functions & Methods ***/
+
+appdata.class.Module.prototype.install = function (target) {
+	// Do not double-install modules.
+	if (appdata.installedModules.indexOf(this.name) != -1) {
+		console.log('Module "' + this.name + '" is already installed.');
+		return;
+	}
+	// Extend the active application encyclopedia with the contents of this Module.
+	anje.data.module.addToEncyclopedia(this.content, target);
+	appdata.installedModules.push(this.name);
+}; // end qis.class.Module.prototype.install()
 
 
 
