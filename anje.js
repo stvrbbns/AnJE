@@ -1,7 +1,7 @@
 /*
  Description:   Another JavaScript Engine
  Author List [most recent active month] URI:
-    * Stephen T. Robbins [2014-07] http://www.linkedin.com/profile/view?id=24352342
+    * Stephen T. Robbins [2014-08] http://www.linkedin.com/profile/view?id=24352342
  Version: 0.1.0
  File Dependencies:
  	* jQuery >= 2.1.1
@@ -20,7 +20,8 @@
 */
 
 /* Table of Contents:
-	0.0 Native Prototype Modification
+	0.0 Native Extensions
+		0.1 Native Prototype Modification
 	1.0 Utility
 	2.0 Data
 		2.1 Data Access
@@ -38,6 +39,7 @@
 var anje = {};
 anje.appurl = '/';
 anje.apptheme = 'theme';
+
 var appdata = {}; // The root node for all application data.
 
 
@@ -169,7 +171,7 @@ anje.utility.saveTextAsFile = function (textToSave, suggestedFileName) {
     }
 
     downloadLink.click();
-}; // end saveTextAsFile()
+}; // end anje.utility.saveTextAsFile()
 
 
 /** getArrayIndexByKeyValue()
@@ -178,7 +180,7 @@ anje.utility.saveTextAsFile = function (textToSave, suggestedFileName) {
  * @param value -- any - the value which the key must contain.
  * @return integer - the index of the first object with a key+value matching the input, or -1 if none found.
 **/
-anje.utility.getArrayIndexByKeyValue = function(array, key, value) {
+anje.utility.getArrayIndexByKeyValue = function (array, key, value) {
 	for (var i = 0; i < array.length; i++) {
 		if (array[i][key] == value) {
 			return i;
@@ -197,7 +199,7 @@ anje.utility.getRandomInteger = function (max, min) {
 	if (max == null || max == undefined) { max = 2147483647; }
 	if (min == null || min == undefined) { min = 0; }
 	return Math.floor(Math.random() * (max - min + 1)) + min;
-}; // end rand_int()
+}; // end anje.utility.rand_int()
 
 
 /** prepareTooltips() sets elements with a class of "tooltip" to be tooltips.
@@ -247,17 +249,18 @@ anje.data = {};
  * -----------------------------------------------------------------------------
 **/
 anje.data = {};
+
 /** get() Gets the data specified by a path from a data source. Executes functions to step into their resolved value.
  * @param src -- string - a string path used to traverse the data source and return an interior value.
  * @param data_source -- object - (optional) the data source to get data out of; defaults to window.
  * @return any-type - the value specified by the path from inside the data source, or undefined.
 **/
-anje.data.get = function (src, data_source) {
+anje.data.get = function (source_path, data_source) {
 	if (data_source === undefined) { data_source = window; }
 	// Remove the trailing '(comma,separated,list)' of attributes to return, if there is one.
-	var split_src = src.split('(');
-	var attributes_string = split_src[1];
-	var target = split_src[0];
+	var split_source_path = source_path.split('(');
+	var attributes_string = split_source_path[1];
+	var target = split_source_path[0];
 	var path = target.split('.');
 	// TODO : make this into a path.forEach()
 	path.forEach(function (step) {
@@ -288,16 +291,16 @@ anje.data.get = function (src, data_source) {
 		// Return the same type as the data_source.
 		if (Array.isArray(data_source)) {
 			return_value = [];
-			data_source.forEach(function(element) {
+			data_source.forEach(function (element) {
 				var item = {};
-				attributes.forEach(function(attribute) {
+				attributes.forEach(function (attribute) {
 					item[attribute] = element[attribute];
 				});
 				return_value.push(item);
 			});
 		} else {
 			return_value = {};
-			attributes.forEach(function(attribute) {
+			attributes.forEach(function (attribute) {
 				return_value[attribute] = data_source[attribute];
 			});
 		}
@@ -503,16 +506,16 @@ anje.ui.view = {};
 anje.ui.view.switch = function (viewname, view) {
 	var viewToGet = view;
 	if (anje.utility.isEmpty(view)) { viewToGet = viewname + '.html'; }
-	$.ajax({
+	jQuery.ajax({
 		type: 'GET',
 		url: anje.appurl + 'ui/themes/' + anje.apptheme + '/views/' + viewToGet, // TODO: update to make use of anje.appurl correctly.
 		cache: false,
-		success: function(data) {
-			$('#ui-app').html(data);
+		success: function (data) {
+			jQuery('#ui-app').html(data);
 			if (anje.utility.isEmpty(anje.ui.tempdata)) { anje.ui.tempdata = {}; }
 			anje.ui.tempdata.current_view = viewname;
 		},
-		fail: function(jqXHR, textStatus, errorThrown) {
+		fail: function (jqXHR, textStatus, errorThrown) {
 			if (anje.utility.isEmpty(view)) {
 				anje.ui.view.switch(viewname, viewname + '.php');
 			}
@@ -607,7 +610,7 @@ anje.ui.template._formattedContent = function ($element, model) {
 
 anje.ui.template._populateAttributes = function ($element, parent_model) {
 	// Use all "data-attr-..." attributes to reset dynamic attributes to their {{}} brace-containing state.
-	$.each($element[0].attributes, function() {
+	jQuery.each($element[0].attributes, function () {
 		var attribute = this;
 		if (attribute.specified && attribute.name.indexOf('data-attr-') === 0) {
 			var attrName = attribute.name.substring(10);
@@ -625,7 +628,7 @@ anje.ui.template._populateAttributes = function ($element, parent_model) {
 		}
 	});
 	// Traverse all attributes, replacing {{.model.path}} with such data wherever double-braces are encountered.
-	$.each($element[0].attributes, function() {
+	jQuery.each($element[0].attributes, function () {
 		var attribute = this;
 		// Skip the data initial-value attributes!
 		if (attribute.specified && attribute.name.indexOf('data-attr-') === -1) {
@@ -733,7 +736,7 @@ anje.ui.template.populate = function ($element, parent_model) {
 	// Recurse over all children of $element to complete population.
 	// This should happen any time there could be children, which is any time no 'attr' was specified.
 	$element.children().each(function () {
-		anje.ui.template.populate($(this), model);
+		anje.ui.template.populate(jQuery(this), model);
 	});
 }; // end anje.ui.template.populate()
 
