@@ -16,6 +16,7 @@
 	UPDATE: Replace or supplement anje.utility with util-x by Xotic750 https://github.com/Xotic750/util-x/blob/master/src/util-x.js
 	IMPROVE: Functions which begin with an '_'underscore should be made properly private
 	IMPROVE: Add functionality supporting the sorting of arrays to anje.ui.template._expandTemplate()
+	IMPROVE: Add support to anje.ui.format.string() for additional text formats.
 */
 
 /* Table of Contents:
@@ -30,11 +31,13 @@
 		3.1 Cross Browser
 		3.2 View Management
 		3.3 Templating
+		3.4 Formatting
 * -----------------------------------------------------------------------------
 */
 
 var anje = {};
-anje.appurl = window.location.host;
+anje.appurl = '/';
+anje.apptheme = 'theme';
 var appdata = {}; // The root node for all application data.
 
 
@@ -502,7 +505,7 @@ anje.ui.view.switch = function (viewname, view) {
 	if (anje.utility.isEmpty(view)) { viewToGet = viewname + '.html'; }
 	$.ajax({
 		type: 'GET',
-		url: '/game/ui/views/' + viewToGet, // TODO: update to make use of anje.appurl correctly.
+		url: anje.appurl + 'ui/themes/' + anje.apptheme + '/views/' + viewToGet, // TODO: update to make use of anje.appurl correctly.
 		cache: false,
 		success: function(data) {
 			$('#ui-app').html(data);
@@ -590,8 +593,11 @@ anje.ui.template._formattedContent = function ($element, model) {
 			break;
 		case 'string':
 			var momentFormat = $element.data('moment-format');
+			var stringFormat = $element.data('string-format');
 			if (!anje.utility.isEmpty(momentFormat)) {
 				$element.html(moment(model).format(momentFormat));
+			} else if (!anje.utility.isEmpty(stringFormat)) {
+				$element.html(anje.ui.format.string(model, null, stringFormat));
 			} else {
 				$element.html(model); // unformatted string
 			}
@@ -730,3 +736,44 @@ anje.ui.template.populate = function ($element, parent_model) {
 		anje.ui.template.populate($(this), model);
 	});
 }; // end anje.ui.template.populate()
+
+
+
+/**
+ * 3.4 Formatting
+ * -----------------------------------------------------------------------------
+**/
+anje.ui.format = {};
+
+anje.ui.format.string = function (inputString, inputData, formatType, options) {
+	if (options == null || options == undefined) { options = {}; }
+	// TODO: Should this throw an error if inputString is not a string?
+	var outputString = inputString;
+	switch (formatType) {
+		case 'markdown':
+			throw 'anje.ui.format.string() has not yet implemented markdown formatting.';
+			break;
+		case 'anje':
+		default:
+			// Replace {{varPath}} with the data gotten at that path from inputData.
+			var dataReplacement_singleRegExp = new RegExp('\{\{([^{}]+)\}\}');
+			var dataReplacement_globalRegExp = new RegExp('\{\{([^{}]+)\}\}', 'g');
+			var execMatch = dataReplacement_globalRegExp.exec(outputString);
+			while (execMatch != null) {
+				var insertValue = anje.data.get(execMatch[1]);
+				outputString = outputString.replace(dataReplacement_singleRegExp, insertValue);
+				execMatch = dataReplacement_globalRegExp.exec(outputString);
+			}
+
+			// Replace obsolete HTML tags {<s>, <u>} with styled spans.
+			outputString = outputString.replace(new RegExp('<s>(.+)</s>'), '<span style="text-decoration:line-through;">$1</span>');
+			outputString = outputString.replace(new RegExp('<u>(.+)</u>'), '<span style="text-decoration:underline;">$1</span>');
+
+			// Activate/enable tooltips; turns [1](text) into <sup>1</sup><span>text</span>
+			outputString = outputString.replace(new RegExp('\[(.+)\]\(\((.+)\)\)'), '<span class="anje-tooltipped" title="$2">$1</span><span class="tooltip" style="display:none;">$2</span>');
+
+			return outputString;
+			break;
+	}
+	throw 'ERROR: invalid formatType specified to anje.ui.format.string().'
+}; // end anje.ui.format.string()
