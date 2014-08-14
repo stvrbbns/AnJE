@@ -35,16 +35,65 @@ anje.appurl = window.location.host;
 
 
 /**
- * 0.0 Native Prototype Modification
+ * 0.0 Native Extensions
  * -----------------------------------------------------------------------------
 **/
 
 // Array Remove - By John Resig (MIT Licensed)
-Array.prototype.remove = function(from, to) {
-	var rest = this.slice((to || from) + 1 || this.length);
-	this.length = from < 0 ? this.length + from : from;
-	return this.push.apply(this, rest);
-}; // end Array.prototype.remove()
+Array.remove = function (array, from, to) {
+	var rest = array.slice((to || from) + 1 || array.length);
+	array.length = from < 0 ? array.length + from : from;
+	return array.push.apply(array, rest);
+}; // end Array.remove()
+
+
+/** toCommaSeparatedList() returns the array as a comma separated list.
+ * @return string - a comma separated list of the array's elements.
+**/
+Array.toCommaSeparatedList = function (array) {
+	var csl = '';
+	if (array.length > 0) {
+		if (anje.utility.isEmpty(array[0].name)) {
+			csl += array[0].toString();
+		} else if (typeof array[0].name == 'function') {
+			csl += array[0].name();
+		} else {
+			csl += array[0].name.toString();
+		}
+	}
+	for (var i = 1; i < array.length; i++) {
+		csl += ', ';
+		if (anje.utility.isEmpty(array[i].name)) {
+			csl += array[i].toString();
+		} else if (typeof array[i].name == 'function') {
+			csl += array[i].name();
+		} else {
+			csl += array[i].name.toString();
+		}
+	};
+	return csl;
+}; // end Array.toCommaSeparatedList()
+
+
+/** size() returns the length of the object as an associative array.
+ * @return integer - the number of elements in the associative array.
+**/
+Object.size = function(obj) {
+	var size = 0, key;
+	for (key in obj) {
+		if (obj.hasOwnProperty(key)) size++;
+	}
+	return size;
+};
+
+
+
+/**
+ * 0.1 Native Prototype Modification
+ * -----------------------------------------------------------------------------
+**/
+
+// none
 
 
 
@@ -61,21 +110,21 @@ Array.prototype.remove = function(from, to) {
 **/
 anje.utility.isEmpty = function (variable) {
 	if (  (variable === undefined)
-	  || (typeof variable === "undefined"))
+	  || (typeof variable === 'undefined'))
 	{ return true; }
 	if (  (variable === null)
 	  || (variable === false)
 	  || (variable === 0)
-	  || (variable === "0")
-	  || (variable === ""))
+	  || (variable === '0')
+	  || (variable === ''))
 	{ return true; }
 
-	// This is necessary because Arrays will have "remove" as a key due to Array.prototype.remove() added in section 0.0 Native Prototype Modification.
-	if (Array.isArray(variable) && variable.length == 0) {
-		return true;
-	}
+	// This is necessary if Array.prototype gets extended (e.g. in section 0.0 Native Prototype Modification).
+	// if (Array.isArray(variable) && variable.length == 0) {
+	// 	return true;
+	// }
 
-	if (typeof variable == "object")
+	if (typeof variable == 'object')
 	{
 		for(var key in variable)
 		{   // These include attributes, children, array elements, etc.
