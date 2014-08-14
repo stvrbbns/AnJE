@@ -192,6 +192,32 @@ anje.utility.getRandomInteger = function (max, min) {
 }; // end rand_int()
 
 
+/** prepareTooltips() sets elements with a class of "tooltip" to be tooltips.
+ * @param style -- string - optional - what style of tooltips should be set up; jQuery UI if omitted.
+ */
+anje.utility.prepareTooltips = function (style) {
+	if (style == null || style == undefined) { style = 'jqueryui'; }
+	style = style.toLowerCase();
+	switch (style) {
+		case 'sticky':
+			jQuery('.tooltip').hide();
+			jQuery('.anje-tooltipped').click(function (event) {
+				jQuery(this.nextSibling).toggle();
+				event.stopPropagation();
+			});
+			jQuery('body').click(function (event) {
+				jQuery('.tooltip').hide();
+			});
+			break;
+		case 'jquery':
+		case 'jqueryui':
+		case 'jquery ui':
+		default:
+			jQuery('.anje-tooltipped').tooltip();
+	}
+}; // end anje.utility.prepareTooltips()
+
+
 
 /**
  * 2.0 Data Manipulation
