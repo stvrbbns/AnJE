@@ -218,6 +218,14 @@ anje.utility.prepareTooltips = function (style) {
 }; // end anje.utility.prepareTooltips()
 
 
+/** makeGetterFunction()
+ * @param val -- string - .
+ */
+anje.utility.makeGetterFunction = function (val) {
+	return function() { return val; };
+}; // end anje.utility.makeGetterFunction()
+
+
 
 /**
  * 2.0 Data Manipulation
