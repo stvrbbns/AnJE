@@ -749,7 +749,7 @@ anje.ui.template.populate = function ($element, parent_model) {
 anje.ui.format = {};
 
 anje.ui.format.string = function (inputString, inputData, formatType, options) {
-	if (options == null || options == undefined) { options = {}; }
+	if (options == undefined) { options = {}; }
 	// TODO: Should this throw an error if inputString is not a string?
 	var outputString = inputString;
 	switch (formatType) {
