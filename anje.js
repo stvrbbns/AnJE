@@ -600,7 +600,7 @@ anje.ui.template._formattedContent = function ($element, model) {
 			if (!anje.utility.isEmpty(momentFormat)) {
 				$element.html(moment(model).format(momentFormat));
 			} else if (!anje.utility.isEmpty(stringFormat)) {
-				$element.html(anje.ui.format.string(model, null, stringFormat));
+				$element.html(anje.ui.format.string(model, stringFormat));
 			} else {
 				$element.html(model); // unformatted string
 			}
@@ -748,7 +748,7 @@ anje.ui.template.populate = function ($element, parent_model) {
 **/
 anje.ui.format = {};
 
-anje.ui.format.string = function (inputString, inputData, formatType, options) {
+anje.ui.format.string = function (inputString, formatType, options) {
 	if (options == undefined) { options = {}; }
 	// TODO: Should this throw an error if inputString is not a string?
 	var outputString = inputString;
@@ -758,16 +758,6 @@ anje.ui.format.string = function (inputString, inputData, formatType, options) {
 			break;
 		case 'anje':
 		default:
-			// Replace {{varPath}} with the data gotten at that path from inputData.
-			var dataReplacement_singleRegExp = new RegExp('\{\{([^{}]+)\}\}');
-			var dataReplacement_globalRegExp = new RegExp('\{\{([^{}]+)\}\}', 'g');
-			var execMatch = dataReplacement_globalRegExp.exec(outputString);
-			while (execMatch != null) {
-				var insertValue = anje.data.get(execMatch[1]);
-				outputString = outputString.replace(dataReplacement_singleRegExp, insertValue);
-				execMatch = dataReplacement_globalRegExp.exec(outputString);
-			}
-
 			// Replace obsolete HTML tags {<s>, <u>} with styled spans.
 			outputString = outputString.replace(new RegExp('<s>(.+)</s>'), '<span style="text-decoration:line-through;">$1</span>');
 			outputString = outputString.replace(new RegExp('<u>(.+)</u>'), '<span style="text-decoration:underline;">$1</span>');
