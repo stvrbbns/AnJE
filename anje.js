@@ -736,7 +736,11 @@ anje.ui.template.populate = function ($element, parent_model) {
 	// Recurse over all children of $element to complete population.
 	// This should happen any time there could be children, which is any time no 'attr' was specified.
 	$element.children().each(function () {
-		anje.ui.template.populate(jQuery(this), model);
+		if (typeof model === 'string') {
+			anje.ui.template.populate(jQuery(this), window.appdata);
+		} else {
+			anje.ui.template.populate(jQuery(this), model);
+		}
 	});
 }; // end anje.ui.template.populate()
 
