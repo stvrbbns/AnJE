@@ -759,8 +759,8 @@ anje.ui.format.string = function (inputString, formatType, options) {
 		case 'anje':
 		default:
 			// Replace obsolete HTML tags {<s>, <u>} with styled spans.
-			outputString = outputString.replace(new RegExp('<s>(.+)</s>'), '<span style="text-decoration:line-through;">$1</span>');
-			outputString = outputString.replace(new RegExp('<u>(.+)</u>'), '<span style="text-decoration:underline;">$1</span>');
+			outputString = outputString.replace(new RegExp('<s>(.+)</s>', 'g'), '<span style="text-decoration:line-through;">$1</span>');
+			outputString = outputString.replace(new RegExp('<u>(.+)</u>', 'g'), '<span style="text-decoration:underline;">$1</span>');
 
 			// Format tooltips for HTML; turns [1](text) into <sup>1</sup><span>text</span>
 			outputString = outputString.replace(new RegExp('\\[(.+)\\]\\(\\((.+)\\)\\)'), '<span class="anje-tooltipped" title="$2">$1</span><span class="tooltip" style="display:none;">$2</span>');
