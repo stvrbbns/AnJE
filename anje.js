@@ -11,6 +11,7 @@
 */
 /* -- Known Issues, Suggested Updates/Improvements, and Notices --
 	ISSUE: There needs to be better handling for what to do with a template when its model data is empty (null object or array).
+	ISSUE: anje.ui.format.string() needs to escape double quotes in the title attribute; just removed title attribute for now...
 	UPDATE: When more widely supported, use Intl.NumberFormat instead of Numeral.js
 	UPDATE: When more widely supported, use Intl.DateTimeFormat instead of Moment.js
 	UPDATE: Replace or supplement anje.utility with util-x by Xotic750 https://github.com/Xotic750/util-x/blob/master/src/util-x.js
@@ -223,7 +224,7 @@ anje.utility.prepareTooltips = function (style) {
 		case 'jqueryui':
 		case 'jquery ui':
 		default:
-			jQuery('.anje-tooltipped').tooltip();
+			jQuery('.anje-tooltipped[title]').tooltip();
 	}
 }; // end anje.utility.prepareTooltips()
 
@@ -766,8 +767,9 @@ anje.ui.format.string = function (inputString, formatType, options) {
 			outputString = outputString.replace(new RegExp('<s>(.+)</s>', 'g'), '<span style="text-decoration:line-through;">$1</span>');
 			outputString = outputString.replace(new RegExp('<u>(.+)</u>', 'g'), '<span style="text-decoration:underline;">$1</span>');
 
-			// Format tooltips for HTML; turns [1](text) into <sup>1</sup><span>text</span>
-			outputString = outputString.replace(new RegExp('\\[(.+)\\]\\(\\((.+)\\)\\)'), '<span class="anje-tooltipped" title="$2">$1</span><span class="tooltip" style="display:none;">$2</span>');
+			// Format tooltips for HTML; turns [|1||text|] into <sup>1</sup><span>text</span>
+			var c = '(?:[^|]|\|(?!\|))'; // A character which is not a pipe, or is a pipe without a consecutive pipe (not followed by another pipe).
+			outputString = outputString.replace(new RegExp('\\[\\|('+c+'+)\\|\\|('+c+'+)\\|\\]', 'g'), '<span class="anje-tooltipped">$1</span><span class="tooltip ui-tooltip ui-widget ui-corner-all ui-widget-content" style="display:none;">$2</span>');
 
 			return outputString;
 			break;
