@@ -98,6 +98,44 @@ Object.size = function(obj) {
 };
 
 
+/** parseBool() attempts to parse a non-boolean-type value as a boolean.
+ * @param value -- any-type - input
+ * @return boolean - output
+**/
+parseBool = function(value) {
+	switch (typeof value) {
+		case 'boolean':
+			return value;
+			break;
+		case 'number':
+			return value === 0 ? false : true;
+			break;
+		case 'string':
+			value = value.replace(/^\s+|\s+$/g, "").toLowerCase(); // lowercase value trimmed of whitespace.
+			if (value === 'false' || value === '0' || value === 'no' || value === '') {
+				return false;
+			} else {
+				return true;
+			}
+			break;
+		case 'function':
+			return parseBool(value());
+			break;
+		case 'object':
+			if (anje.utility.isEmpty(value)) {
+				return false;
+			} else {
+				return true;
+			}
+			break;
+		case 'undefined':
+		default:
+			return false;
+			break;
+	}
+}; // end parseBool()
+
+
 
 /**
  * 0.1 Native Prototype Modification
