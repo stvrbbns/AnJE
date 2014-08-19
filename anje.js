@@ -347,6 +347,109 @@ anje.data.get = function (source_path, data_source) {
 	}
 }; // end anje.data.get()
 
+/** select() Take an array of objects and return the selected subset of those objects.
+ * @param objectArray -- array - array of objects to select from
+ * @param selectionCriteria -- string - based on the jQuery attribute selectors
+ * @return array - the subset of objects which were selected.
+**/
+anje.data.select = function (objectArray, selectionCriteria) {
+	if (anje.utility.isEmpty(objectArray)) { return []; }
+	var returnArray = new Array().concat(objectArray);
+	var regex_Selector = new RegExp('\\[(?:([^\\]]+)(..)\'([^\']+)\')\\]|\\[(?:([^\\]=\']+))\\]', 'g');
+	var match;
+	while ((match = regex_Selector.exec(selectionCriteria)) !== null) {
+		var attribute = match[1];
+		var operator = match[2];
+		var value = match[3];
+		for (var i = 0; i < returnArray.length; i++) {
+			switch(operator) {
+				case undefined: // e.g. "[myAttribute]" has no operator; it just has to exist.
+					attribute = match[4];
+					if (returnArray[i][attribute] == undefined) {
+						Array.remove(returnArray, i);
+						i--;
+					}
+					break;
+				case '==':
+					if (typeof returnArray[i][attribute] === 'number') { value = parseFloat(value); }
+					if (typeof returnArray[i][attribute] === 'boolean') { value = parseBool(value); }
+					if (returnArray[i][attribute] != value) {
+						Array.remove(returnArray, i);
+						i--;
+					}
+					break;
+				case '!=':
+					if (typeof returnArray[i][attribute] === 'number') { value = parseFloat(value); }
+					if (typeof returnArray[i][attribute] === 'boolean') { value = parseBool(value); }
+					if (returnArray[i][attribute] == value) {
+						Array.remove(returnArray, i);
+						i--;
+					}
+					break;
+				case '^=':
+					var attr = returnArray[i][attribute].toString();
+					if (value.length > attr.length || attr.substring(0,value.length) != value) {
+						Array.remove(returnArray, i);
+						i--;
+					}
+					break;
+				case '$=':
+					var attr = returnArray[i][attribute].toString();
+					if (value.length > attr.length || attr.substring(attr.length-value.length) != value) {
+						Array.remove(returnArray, i);
+						i--;
+					}
+					break;
+				case '*=':
+					var attr = returnArray[i][attribute].toString();
+					if (attr.indexOf(value) != -1) {
+						Array.remove(returnArray, i);
+						i--;
+					}
+					break;
+				case '!*':
+					var attr = returnArray[i][attribute].toString();
+					if (attr.indexOf(value) == -1) {
+						Array.remove(returnArray, i);
+						i--;
+					}
+					break;
+				case '>>':
+					value = parseFloat(value);
+					if (returnArray[i][attribute] <= value) {
+						Array.remove(returnArray, i);
+						i--;
+					}
+					break;
+				case '>=':
+					value = parseFloat(value);
+					if (returnArray[i][attribute] < value) {
+						Array.remove(returnArray, i);
+						i--;
+					}
+					break;
+				case '<<':
+					value = parseFloat(value);
+					if (returnArray[i][attribute] >= value) {
+						Array.remove(returnArray, i);
+						i--;
+					}
+					break;
+				case '<=':
+					value = parseFloat(value);
+					if (returnArray[i][attribute] > value) {
+						Array.remove(returnArray, i);
+						i--;
+					}
+					break;
+				default:
+					throw 'Operator "' + operator + '" is not a valid operator for a selector provided to anje.data.select()'
+			}
+		};
+	}
+	return returnArray;
+}; // end anje.data.select()
+
 
 
 /**
@@ -744,6 +847,11 @@ anje.ui.template.populate = function ($element, parent_model) {
 		var child_template = $element.data('child_template');
 		if (anje.utility.isEmpty(child_template)) {
 			$element.data('child_template', $element[0].outerHTML);
+		}
+
+		var dataSelector = $element.data('selector');
+		if (dataSelector != undefined) {
+			model = anje.data.select(model, dataSelector);
 		}
 
 		if (model.length > 0) {
