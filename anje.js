@@ -59,6 +59,7 @@ Array.remove = function (array, from, to) {
 
 
 /** toCommaSeparatedList() returns the array as a comma separated list.
+ * @param array -- array - array of strings
  * @return string - a comma separated list of the array's elements.
 **/
 Array.toCommaSeparatedList = function (array) {
@@ -87,6 +88,7 @@ Array.toCommaSeparatedList = function (array) {
 
 
 /** size() returns the length of the object as an associative array.
+ * @param obj -- object - the object
  * @return integer - the number of elements in the associative array.
 **/
 Object.size = function(obj) {
@@ -95,7 +97,7 @@ Object.size = function(obj) {
 		if (obj.hasOwnProperty(key)) size++;
 	}
 	return size;
-};
+}; // end Object.size()
 
 
 /** parseBool() attempts to parse a non-boolean-type value as a boolean.
