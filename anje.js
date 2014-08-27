@@ -825,6 +825,9 @@ anje.ui.template.populate = function ($element, parent_model) {
 		model = parent_model;
 	} else if (model_path.substring(0,1) === '.') {
 		model = anje.data.get(model_path.substr(1), parent_model);
+		if (Array.isArray(parent_model)) {
+			model._index = $element.data('index');
+		}
 	} else {
 		model = anje.data.get(model_path);
 
