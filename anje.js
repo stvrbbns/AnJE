@@ -307,15 +307,8 @@ anje.data.get = function (source_path, data_source) {
 	path.forEach(function (step) {
 		if (data_source === undefined || data_source === null) { return undefined; }
 
-		// Step into an array, if specified:
-		if (step.indexOf('[') != -1) {
-			var split_step = step.split('[');
-			var array = split_step[0];
-			var index = split_step[1].substr(0, split_step[1].length-1)
-			data_source = data_source[array];
-			if (data_source === undefined || data_source === null) { return undefined; }
-			data_source = data_source[index];
-		} else if (typeof data_source[step] === 'function') {
+		if (typeof data_source[step] === 'function') {
+			// Resolve function, if specified:
 			data_source = data_source[step]();
 		} else {
 			data_source = data_source[step];
