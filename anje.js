@@ -21,9 +21,10 @@
 */
 
 /* Table of Contents:
-	0.0 Native Extensions
-		0.1 Native Prototype Modification
 	1.0 Utility
+		1.1 Array Utilities
+		1.2 Math Utilities
+		1.3 Object Utilities
 	2.0 Data
 		2.1 Data Access
 		2.2 Protoclassing
@@ -46,65 +47,57 @@ var appdata = {}; // The root node for all application data.
 
 
 /**
- * 0.0 Native Extensions
+ * 1.0 Utility
  * -----------------------------------------------------------------------------
 **/
-
-// Array Remove - By John Resig (MIT Licensed)
-Array.remove = function (array, from, to) {
-	var rest = array.slice((to || from) + 1 || array.length);
-	array.length = from < 0 ? array.length + from : from;
-	return array.push.apply(array, rest);
-}; // end Array.remove()
+ anje.utility = {};
 
 
-/** toCommaSeparatedList() returns the array as a comma separated list.
- * @param array -- array - array of strings
- * @return string - a comma separated list of the array's elements.
-**/
-Array.toCommaSeparatedList = function (array) {
-	var csl = '';
-	if (array.length > 0) {
-		if (anje.utility.isEmpty(array[0].name)) {
-			csl += array[0].toString();
-		} else if (typeof array[0].name == 'function') {
-			csl += array[0].name();
-		} else {
-			csl += array[0].name.toString();
+/** isEmpty() takes any variable and returns whether or not it is empty as a boolean.
+ * @param variable -- any-type - a variable which may or may not be empty.
+ * @return bool - whether or not the variable is empty.
+ */
+anje.utility.isEmpty = function (variable) {
+	if (  (variable === undefined)
+	  || (typeof variable === 'undefined'))
+	{ return true; }
+	if (  (variable === null)
+	  || (variable === false)
+	  || (variable === 0)
+	  || (variable === '0')
+	  || (variable === ''))
+	{ return true; }
+
+	// This is necessary if Array.prototype gets extended (e.g. in section 0.0 Native Prototype Modification).
+	// if (Array.isArray(variable) && variable.length == 0) {
+	// 	return true;
+	// }
+
+	if (typeof variable == 'object')
+	{
+		for(var key in variable)
+		{   // These include attributes, children, array elements, etc.
+			return false;
 		}
+		return true;
 	}
-	for (var i = 1; i < array.length; i++) {
-		csl += ', ';
-		if (anje.utility.isEmpty(array[i].name)) {
-			csl += array[i].toString();
-		} else if (typeof array[i].name == 'function') {
-			csl += array[i].name();
-		} else {
-			csl += array[i].name.toString();
-		}
-	};
-	return csl;
-}; // end Array.toCommaSeparatedList()
+	return false;
+}; // end anje.utility.isEmpty()
 
 
-/** size() returns the length of the object as an associative array.
- * @param obj -- object - the object
- * @return integer - the number of elements in the associative array.
-**/
-Object.size = function(obj) {
-	var size = 0, key;
-	for (key in obj) {
-		if (obj.hasOwnProperty(key)) size++;
-	}
-	return size;
-}; // end Object.size()
+/** makeGetterFunction()
+ * @param val -- string - .
+ */
+anje.utility.makeGetterFunction = function (val) {
+	return function() { return val; };
+}; // end anje.utility.makeGetterFunction()
 
 
 /** parseBool() attempts to parse a non-boolean-type value as a boolean.
  * @param value -- any-type - input
  * @return boolean - output
-**/
-parseBool = function(value) {
+ */
+anje.utility.parseBool = function(value) {
 	switch (typeof value) {
 		case 'boolean':
 			return value;
@@ -135,112 +128,7 @@ parseBool = function(value) {
 			return false;
 			break;
 	}
-}; // end parseBool()
-
-
-
-/**
- * 0.1 Native Prototype Modification
- * -----------------------------------------------------------------------------
-**/
-
-// none
-
-
-
-/**
- * 1.0 Utility
- * -----------------------------------------------------------------------------
-**/
- anje.utility = {};
-
-
-/** isEmpty() takes any variable and returns whether or not it is empty as a boolean.
- * @param variable -- any-type - a variable which may or may not be empty.
- * @return bool - whether or not the variable is empty.
-**/
-anje.utility.isEmpty = function (variable) {
-	if (  (variable === undefined)
-	  || (typeof variable === 'undefined'))
-	{ return true; }
-	if (  (variable === null)
-	  || (variable === false)
-	  || (variable === 0)
-	  || (variable === '0')
-	  || (variable === ''))
-	{ return true; }
-
-	// This is necessary if Array.prototype gets extended (e.g. in section 0.0 Native Prototype Modification).
-	// if (Array.isArray(variable) && variable.length == 0) {
-	// 	return true;
-	// }
-
-	if (typeof variable == 'object')
-	{
-		for(var key in variable)
-		{   // These include attributes, children, array elements, etc.
-			return false;
-		}
-		return true;
-	}
-	return false;
-}; // end anje.utility.isEmpty()
-
-
-/** saveTextAsFile() accepts input text and downloads it as a plain text file to the user/client.
- * @param textToSave -- string - the text to save as a text file.
- * @param suggestedFileName -- string - (optional) a suggested name to save the text file as.
-**/
-anje.utility.saveTextAsFile = function (textToSave, suggestedFileName) {
-    var textFileAsBlob = new Blob([textToSave], {type:'text/plain'});
-    if (utilityJS.isEmpty(suggestedFileName)) { suggestedFileName = ''; }
-
-    var downloadLink = document.createElement('a');
-    downloadLink.download = suggestedFileName;
-    downloadLink.innerHTML = 'Download File';
-    if (window.webkitURL != null) {
-        // Chrome allows the link to be clicked
-        // without actually adding it to the DOM.
-        downloadLink.href = window.webkitURL.createObjectURL(textFileAsBlob);
-    } else {
-        // Firefox requires the link to be added to the DOM
-        // before it can be clicked.
-        downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
-        downloadLink.onclick = function () { this.remove(); };
-        downloadLink.style.display = 'none';
-        document.body.appendChild(downloadLink);
-    }
-
-    downloadLink.click();
-}; // end anje.utility.saveTextAsFile()
-
-
-/** getArrayIndexByKeyValue()
- * @param array -- array - the array to search.
- * @param key -- string - the key which the found object must have.
- * @param value -- any - the value which the key must contain.
- * @return integer - the index of the first object with a key+value matching the input, or -1 if none found.
-**/
-anje.utility.getArrayIndexByKeyValue = function (array, key, value) {
-	for (var i = 0; i < array.length; i++) {
-		if (array[i][key] == value) {
-			return i;
-		}
-	}
-	return -1;
-}; // end anje.utility.getArrayIndexByKeyValue()
-
-
-/** getRandomInteger() generates a random integer from a specified range.
- * @param max -- integer - optional - high end of the range; 2147483647 if omitted.
- * @param min -- integer - optional - the low end of the range; 0 if omitted.
- * @return integer - a randomly generated integer bounded by the range.
- */
-anje.utility.getRandomInteger = function (max, min) {
-	if (max == null || max == undefined) { max = 2147483647; }
-	if (min == null || min == undefined) { min = 0; }
-	return Math.floor(Math.random() * (max - min + 1)) + min;
-}; // end anje.utility.rand_int()
+}; // end anje.utility.parseBool()
 
 
 /** prepareTooltips() sets elements with a class of "tooltip" to be tooltips.
@@ -269,12 +157,140 @@ anje.utility.prepareTooltips = function (style) {
 }; // end anje.utility.prepareTooltips()
 
 
-/** makeGetterFunction()
- * @param val -- string - .
+/** saveTextAsFile() accepts input text and downloads it as a plain text file to the user/client.
+ * @param textToSave -- string - the text to save as a text file.
+ * @param suggestedFileName -- string - (optional) a suggested name to save the text file as.
  */
-anje.utility.makeGetterFunction = function (val) {
-	return function() { return val; };
-}; // end anje.utility.makeGetterFunction()
+anje.utility.saveTextAsFile = function (textToSave, suggestedFileName) {
+    var textFileAsBlob = new Blob([textToSave], {type:'text/plain'});
+    if (utilityJS.isEmpty(suggestedFileName)) { suggestedFileName = ''; }
+
+    var downloadLink = document.createElement('a');
+    downloadLink.download = suggestedFileName;
+    downloadLink.innerHTML = 'Download File';
+    if (window.webkitURL != null) {
+        // Chrome allows the link to be clicked
+        // without actually adding it to the DOM.
+        downloadLink.href = window.webkitURL.createObjectURL(textFileAsBlob);
+    } else {
+        // Firefox requires the link to be added to the DOM
+        // before it can be clicked.
+        downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
+        downloadLink.onclick = function () { this.remove(); };
+        downloadLink.style.display = 'none';
+        document.body.appendChild(downloadLink);
+    }
+
+    downloadLink.click();
+}; // end anje.utility.saveTextAsFile()
+
+
+/**
+ * 1.1 Array Utilities
+ * -----------------------------------------------------------------------------
+**/
+anje.utility.array = {};
+
+
+/** getArrayIndexByKeyValue()
+ * @param array -- array - the array to search.
+ * @param key -- string - the key which the found object must have.
+ * @param value -- any - the value which the key must contain.
+ * @return integer - the index of the first object with a key+value matching the input, or -1 if none found.
+ */
+anje.utility.array.getArrayIndexByKeyValue = function (array, key, value) {
+	for (var i = 0; i < array.length; i++) {
+		if (array[i][key] == value) {
+			return i;
+		}
+	}
+	return -1;
+}; // end anje.utility.getArrayIndexByKeyValue()
+
+
+/** remove() removes a contiguous subset of elements from an array by index.
+ * Array Remove - By John Resig (MIT Licensed)
+ * @param array -- array - the array to remove elements from.
+ * @param from -- integer - the first index to remove.
+ * @param to -- integer - the last index to remove.
+ * @return integer - the new length of the array.
+ */
+anje.utility.array.remove = function (array, from, to) {
+	var rest = array.slice((to || from) + 1 || array.length);
+	array.length = from < 0 ? array.length + from : from;
+	return array.push.apply(array, rest);
+}; // end anje.utility.array.remove()
+
+
+/** toCommaSeparatedList() returns the array as a comma separated list.
+ * @param array -- array - array of strings
+ * @return string - a comma separated list of the array's elements.
+ */
+anje.utility.array.toCommaSeparatedList = function (array) {
+	var csl = '';
+	if (array.length > 0) {
+		if (anje.utility.isEmpty(array[0].name)) {
+			csl += array[0].toString();
+		} else if (typeof array[0].name == 'function') {
+			csl += array[0].name();
+		} else {
+			csl += array[0].name.toString();
+		}
+	}
+	for (var i = 1; i < array.length; i++) {
+		csl += ', ';
+		if (anje.utility.isEmpty(array[i].name)) {
+			csl += array[i].toString();
+		} else if (typeof array[i].name == 'function') {
+			csl += array[i].name();
+		} else {
+			csl += array[i].name.toString();
+		}
+	};
+	return csl;
+}; // end anje.utility.array.toCommaSeparatedList()
+
+
+/**
+ * 1.2 Math Utilities
+ * -----------------------------------------------------------------------------
+**/
+anje.utility.math = {};
+
+
+/** randomInteger() generates a random integer from a specified range.
+ * @param max -- integer - optional - high end of the range; 2147483647 if omitted.
+ * @param min -- integer - optional - the low end of the range; 0 if omitted.
+ * @return integer - a randomly generated integer bounded by the range.
+ */
+anje.utility.math.randomInteger = function (max, min) {
+	if (max == null || max == undefined) { max = 2147483647; }
+	if (min == null || min == undefined) { min = 0; }
+	return Math.floor(Math.random() * (max - min + 1)) + min;
+}; // end anje.utility.math.randomInteger()
+
+
+ */
+
+
+/**
+ * 1.3 Object Utilities
+ * -----------------------------------------------------------------------------
+**/
+anje.utility.object = {};
+
+
+/** size() returns the length of the object as an associative array.
+ * @param obj -- object - the object
+ * @return integer - the number of elements in the associative array.
+ */
+anje.utility.object.size = function(obj) {
+	var size = 0, key;
+	for (key in obj) {
+		if (obj.hasOwnProperty(key)) size++;
+	}
+	return size;
+}; // end anje.utility.object.size()
 
 
 
@@ -394,79 +410,79 @@ anje.data.select = function (objectArray, selectionCriteria) {
 				case undefined: // e.g. "[myAttribute]" has no operator; it just has to exist.
 					attribute = match[4];
 					if (returnArray[i][attribute] == undefined) {
-						Array.remove(returnArray, i);
+						anje.utility.array.remove(returnArray, i);
 						i--;
 					}
 					break;
 				case '==':
 					if (typeof returnArray[i][attribute] === 'number') { value = parseFloat(value); }
-					if (typeof returnArray[i][attribute] === 'boolean') { value = parseBool(value); }
+					if (typeof returnArray[i][attribute] === 'boolean') { value = anje.utility.parseBool(value); }
 					if (returnArray[i][attribute] != value) {
-						Array.remove(returnArray, i);
+						anje.utility.array.remove(returnArray, i);
 						i--;
 					}
 					break;
 				case '!=':
 					if (typeof returnArray[i][attribute] === 'number') { value = parseFloat(value); }
-					if (typeof returnArray[i][attribute] === 'boolean') { value = parseBool(value); }
+					if (typeof returnArray[i][attribute] === 'boolean') { value = anje.utility.parseBool(value); }
 					if (returnArray[i][attribute] == value) {
-						Array.remove(returnArray, i);
+						anje.utility.array.remove(returnArray, i);
 						i--;
 					}
 					break;
 				case '^=':
 					var attr = returnArray[i][attribute].toString();
 					if (value.length > attr.length || attr.substring(0,value.length) != value) {
-						Array.remove(returnArray, i);
+						anje.utility.array.remove(returnArray, i);
 						i--;
 					}
 					break;
 				case '$=':
 					var attr = returnArray[i][attribute].toString();
 					if (value.length > attr.length || attr.substring(attr.length-value.length) != value) {
-						Array.remove(returnArray, i);
+						anje.utility.array.remove(returnArray, i);
 						i--;
 					}
 					break;
 				case '*=':
 					var attr = returnArray[i][attribute].toString();
 					if (attr.indexOf(value) != -1) {
-						Array.remove(returnArray, i);
+						anje.utility.array.remove(returnArray, i);
 						i--;
 					}
 					break;
 				case '!*':
 					var attr = returnArray[i][attribute].toString();
 					if (attr.indexOf(value) == -1) {
-						Array.remove(returnArray, i);
+						anje.utility.array.remove(returnArray, i);
 						i--;
 					}
 					break;
 				case '>>':
 					value = parseFloat(value);
 					if (returnArray[i][attribute] <= value) {
-						Array.remove(returnArray, i);
+						anje.utility.array.remove(returnArray, i);
 						i--;
 					}
 					break;
 				case '>=':
 					value = parseFloat(value);
 					if (returnArray[i][attribute] < value) {
-						Array.remove(returnArray, i);
+						anje.utility.array.remove(returnArray, i);
 						i--;
 					}
 					break;
 				case '<<':
 					value = parseFloat(value);
 					if (returnArray[i][attribute] >= value) {
-						Array.remove(returnArray, i);
+						anje.utility.array.remove(returnArray, i);
 						i--;
 					}
 					break;
 				case '<=':
 					value = parseFloat(value);
 					if (returnArray[i][attribute] > value) {
-						Array.remove(returnArray, i);
+						anje.utility.array.remove(returnArray, i);
 						i--;
 					}
 					break;
