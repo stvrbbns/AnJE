@@ -191,7 +191,6 @@ anje.utility.saveTextAsFile = function (textToSave, suggestedFileName) {
 **/
 anje.utility.array = {};
 
-
 /** getArrayIndexByKeyValue()
  * @param array -- array - the array to search.
  * @param key -- string - the key which the found object must have.
@@ -220,6 +219,21 @@ anje.utility.array.remove = function (array, from, to) {
 	array.length = from < 0 ? array.length + from : from;
 	return array.push.apply(array, rest);
 }; // end anje.utility.array.remove()
+
+
+/** removeByValue() removes all elements with the indicated target value from an array.
+ * @param array -- array - array to remove elements from.
+ * @param value -- any type - remove array elements matching this value.
+ * @return array -- the passed array with the target element(s) removed.
+ */
+anje.utility.array.removeByValue = function (array, value) {
+	for(var arrayIndex=0; arrayIndex<array.length; arrayIndex++) {
+		if(array[arrayIndex] == value) {
+			anje.utility.array.remove(array, arrayIndex);
+		}
+	}
+	return array;
+}; // end anje.utility.array.removeByValue()
 
 
 /** toCommaSeparatedList() returns the array as a comma separated list.
@@ -257,7 +271,6 @@ anje.utility.array.toCommaSeparatedList = function (array) {
 **/
 anje.utility.math = {};
 
-
 /** randomInteger() generates a random integer from a specified range.
  * @param max -- integer - optional - high end of the range; 2147483647 if omitted.
  * @param min -- integer - optional - the low end of the range; 0 if omitted.
@@ -270,7 +283,14 @@ anje.utility.math.randomInteger = function (max, min) {
 }; // end anje.utility.math.randomInteger()
 
 
+/** valueIsNaN() determines if value is NaN (rather than simply not being a number) and answers as a boolean.
+ * see: http://designpepper.com/blog/drips/the-problem-with-testing-for-nan-in-javascript.html
+ * @param value -- any-type - input
+ * @return boolean - output
  */
+anje.utility.math.valueIsNaN = function(value) {
+	return (value !== value);
+}; // end anje.utility.math.valueIsNaN()
 
 
 /**
@@ -278,7 +298,6 @@ anje.utility.math.randomInteger = function (max, min) {
  * -----------------------------------------------------------------------------
 **/
 anje.utility.object = {};
-
 
 /** size() returns the length of the object as an associative array.
  * @param obj -- object - the object
@@ -299,7 +318,6 @@ anje.utility.object.size = function(obj) {
  * -----------------------------------------------------------------------------
 **/
 anje.data = {};
-
 
 /**
  * 2.1 Data Access
@@ -390,6 +408,7 @@ anje.data.get = function (source_path, data_source) {
 		return return_value;
 	}
 }; // end anje.data.get()
+
 
 /** select() Take an array of objects and return the selected subset of those objects.
  * @param objectArray -- array - array of objects to select from
