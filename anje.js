@@ -298,29 +298,62 @@ anje.data = {};
 **/
 anje.data.get = function (source_path, data_source) {
 	if (data_source === undefined) { data_source = window; }
-	// Remove the trailing '(comma,separated,list)' of attributes to return, if there is one.
-	var split_source_path = source_path.split('(');
+	// Remove the trailing '{comma,separated,list}' of attributes to return, if there is one.
+	var split_source_path = source_path.split('{');
 	var attributes_string = split_source_path[1];
 	var target = split_source_path[0];
 	var path = target.split('.');
-	// TODO : make this into a path.forEach()
-	path.forEach(function (step) {
+
+	for (var stepIndex = 0; stepIndex < path.length; stepIndex++) {
+		var step = path[stepIndex];
+
 		if (data_source === undefined || data_source === null) { return undefined; }
 
 		if (typeof data_source[step] === 'function') {
 			// Resolve function, if specified:
-			data_source = data_source[step]();
+			var nextStep = path[stepIndex+1];
+			if (nextStep != undefined && nextStep.substring(0,1) === '(') {
+				// If the function has argument parameters specified, then extract those.
+				var argPathsCSL = '';
+				do {
+					stepIndex += 1;
+					nextStep = path[stepIndex];
+					argPathsCSL += '.' + nextStep;
+				} while (stepIndex < path.length && argPathsCSL.indexOf(')') === -1);
+
+				if (argPathsCSL.indexOf(')') === -1) {
+					console.warn(argPathsCSL);
+					throw 'ERROR: anje.data.get() tried to resolve a function with argument parameters but encountered no closing parenthesis.';
+				}
+
+				argPathsCSL = argPathsCSL.substring(2).split(')')[0]; // Remove the excess leading period and the leading and trailing parentheses.
+				var argPathsArray = argPathsCSL.split(',');
+				var argsArray = [];
+				for (var i = 0; i < argPathsArray.length; i++) {
+					var argPath = argPathsArray[i];
+					if (argPath.substring(0,1) === '.') {
+						argsArray.push(anje.data.get(argPath, data_source));
+					} else {
+						argsArray.push(anje.data.get(argPath));
+					}
+				};
+				data_source = data_source[step].apply(data_source, argsArray);
+			} else {
+				data_source = data_source[step]();
+			}
 		} else {
+			// Otherwise, simply proceed down the path one step.
 			data_source = data_source[step];
 		}
-	});
-	if (anje.utility.isEmpty(data_source) || attributes_string === undefined || attributes_string === ')') {
+	};
+
+	if (anje.utility.isEmpty(data_source) || attributes_string === undefined || attributes_string === '}') {
 		// If our data source is empty or no attributes were specified, then return the data as-is.
 		return data_source;
 	} else {
 		var return_value;
 		// Get the array of specified attributes.
-		attributes_string = attributes_string.split(')')[0];
+		attributes_string = attributes_string.split('}')[0];
 		var attributes = attributes_string.split(',');
 		// Return the same type as the data_source.
 		if (Array.isArray(data_source)) {
