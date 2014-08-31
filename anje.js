@@ -332,11 +332,7 @@ anje.data = {};
 **/
 anje.data.get = function (source_path, data_source) {
 	if (data_source === undefined) { data_source = window; }
-	// Remove the trailing '{comma,separated,list}' of attributes to return, if there is one.
-	var split_source_path = source_path.split('{');
-	var attributes_string = split_source_path[1];
-	var target = split_source_path[0];
-	var path = target.split('.');
+	var path = source_path.split('.');
 
 	for (var stepIndex = 0; stepIndex < path.length; stepIndex++) {
 		var step = path[stepIndex];
@@ -380,33 +376,7 @@ anje.data.get = function (source_path, data_source) {
 			data_source = data_source[step];
 		}
 	};
-
-	if (anje.utility.isEmpty(data_source) || attributes_string === undefined || attributes_string === '}') {
-		// If our data source is empty or no attributes were specified, then return the data as-is.
-		return data_source;
-	} else {
-		var return_value;
-		// Get the array of specified attributes.
-		attributes_string = attributes_string.split('}')[0];
-		var attributes = attributes_string.split(',');
-		// Return the same type as the data_source.
-		if (Array.isArray(data_source)) {
-			return_value = [];
-			data_source.forEach(function (element) {
-				var item = {};
-				attributes.forEach(function (attribute) {
-					item[attribute] = element[attribute];
-				});
-				return_value.push(item);
-			});
-		} else {
-			return_value = {};
-			attributes.forEach(function (attribute) {
-				return_value[attribute] = data_source[attribute];
-			});
-		}
-		return return_value;
-	}
+	return data_source;
 }; // end anje.data.get()
 
 
