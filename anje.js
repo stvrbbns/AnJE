@@ -366,16 +366,27 @@ anje.data.get = function (source_path, data_source) {
 					} else {
 						argsArray.push(anje.data.get(argPath));
 					}
-				};
+				}
 				data_source = data_source[step].apply(data_source, argsArray);
 			} else {
 				data_source = data_source[step]();
 			}
+		} else if (step === '?' && Array.isArray(data_source)) {
+			// Select a random array element.
+			data_source = data_source[anje.utility.math.randomInteger(data_source.length-1)];
+		} else if (step === '*' && Array.isArray(data_source)) {
+			// Select all array elements.
+			var a = [];
+			var subpath = path.slice(stepIndex+1).join('.'); // Reassemble the path starting after the '*' star.
+			for (var i = 0; i < data_source.length; i++) {
+				a.push(anje.data.get(subpath, data_source[i]));
+			}
+			data_source = a;
 		} else {
 			// Otherwise, simply proceed down the path one step.
 			data_source = data_source[step];
 		}
-	};
+	}
 	return data_source;
 }; // end anje.data.get()
 
