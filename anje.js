@@ -192,7 +192,7 @@ anje.utility.saveTextAsFile = function (textToSave, suggestedFileName) {
 anje.utility.array = {};
 
 /** getArrayIndexByKeyValue()
- * @param array -- array - the array to search.
+ * @param array -- array - the array of objects to search.
  * @param key -- string - the key which the found object must have.
  * @param value -- any - the value which the key must contain.
  * @return integer - the index of the first object with a key+value matching the input, or -1 if none found.
