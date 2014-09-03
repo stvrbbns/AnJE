@@ -689,7 +689,8 @@ anje.ui.crossbrowser.toggleFullScreen = function () {
 anje.ui.view = {};
 
 // NOTICE: Never cache the results of this function. Templates should be repopulated instead if that is the desired effect.
-anje.ui.view.switch = function (viewname, view) {
+anje.ui.view.switch = function (viewname, view, target) {
+	if (target == undefined) { target = '#ui-app'; }
 	var viewToGet = view;
 	if (anje.utility.isEmpty(view)) { viewToGet = viewname + '.html'; }
 	jQuery.ajax({
@@ -697,7 +698,7 @@ anje.ui.view.switch = function (viewname, view) {
 		url: anje.appurl + 'ui/themes/' + anje.apptheme + '/views/' + viewToGet, // TODO: update to make use of anje.appurl correctly.
 		cache: false,
 		success: function (data) {
-			jQuery('#ui-app').html(data);
+			jQuery(target).html(data);
 			if (anje.utility.isEmpty(anje.ui.tempdata)) { anje.ui.tempdata = {}; }
 			anje.ui.tempdata.current_view = viewname;
 		},
