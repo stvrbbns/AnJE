@@ -49,7 +49,7 @@ var appdata = {}; // The root node for all application data.
 /**
  * 1.0 Utility
  * -----------------------------------------------------------------------------
-**/
+ */
  anje.utility = {};
 
 
@@ -188,7 +188,7 @@ anje.utility.saveTextAsFile = function (textToSave, suggestedFileName) {
 /**
  * 1.1 Array Utilities
  * -----------------------------------------------------------------------------
-**/
+ */
 anje.utility.array = {};
 
 /** getArrayIndexByKeyValue()
@@ -268,7 +268,7 @@ anje.utility.array.toCommaSeparatedList = function (array) {
 /**
  * 1.2 Math Utilities
  * -----------------------------------------------------------------------------
-**/
+ */
 anje.utility.math = {};
 
 /** randomInteger() generates a random integer from a specified range.
@@ -296,7 +296,7 @@ anje.utility.math.valueIsNaN = function(value) {
 /**
  * 1.3 Object Utilities
  * -----------------------------------------------------------------------------
-**/
+ */
 anje.utility.object = {};
 
 /** size() returns the length of the object as an associative array.
@@ -316,20 +316,20 @@ anje.utility.object.size = function(obj) {
 /**
  * 2.0 Data
  * -----------------------------------------------------------------------------
-**/
+ */
 anje.data = {};
 
 /**
  * 2.1 Data Access
  * -----------------------------------------------------------------------------
-**/
+ */
 anje.data = {};
 
 /** get() Gets the data specified by a path from a data source. Executes functions to step into their resolved value.
  * @param src -- string - a string path used to traverse the data source and return an interior value.
  * @param data_source -- object - (optional) the data source to get data out of; defaults to window.
  * @return any-type - the value specified by the path from inside the data source, or undefined.
-**/
+ */
 anje.data.get = function (source_path, data_source) {
 	if (data_source === undefined) { data_source = window; }
 	var path = source_path.split('.');
@@ -395,7 +395,7 @@ anje.data.get = function (source_path, data_source) {
  * @param objectArray -- array - array of objects to select from
  * @param selectionCriteria -- string - based on the jQuery attribute selectors
  * @return array - the subset of objects which were selected.
-**/
+ */
 anje.data.select = function (objectArray, selectionCriteria) {
 	if (anje.utility.isEmpty(objectArray)) { return []; }
 	var returnArray = new Array().concat(objectArray);
@@ -499,7 +499,7 @@ anje.data.select = function (objectArray, selectionCriteria) {
 /**
  * 2.2 Protoclassing
  * -----------------------------------------------------------------------------
-**/
+ */
 anje.data.class = {};
 appdata.class = {}; // associative array of protoclasses
 
@@ -543,7 +543,7 @@ anje.data.class.loadObject = function (objectInfo) {
 /**
  * 2.3 Modularization
  * -----------------------------------------------------------------------------
-**/
+ */
 anje.data.module = {};
 appdata.encyclopedia = {}; // The root node all Module content is installed into.
 appdata.installedModules = []; // String array naming all installed modules.
@@ -609,7 +609,7 @@ anje.data.module.getFromEncyclopedia = function (path, targetObject) {
 /**
  * 2.3.1 Module class
  * -----------------------------------------------------------------------------
-**/
+ */
 
 /*** Module - Constructor ***/
 appdata.class.Module = function () {
@@ -638,14 +638,14 @@ appdata.class.Module.prototype.install = function (target) {
 /**
  * 3.0 UI
  * -----------------------------------------------------------------------------
-**/
+ */
 anje.ui = {};
 
 
 /**
  * 3.1 Cross Browser
  * -----------------------------------------------------------------------------
-**/
+ */
 anje.ui.crossbrowser = {};
 
 // Adapted from https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Using_full_screen_mode
@@ -685,7 +685,7 @@ anje.ui.crossbrowser.toggleFullScreen = function () {
 /**
  * 3.2 View Management
  * -----------------------------------------------------------------------------
-**/
+ */
 anje.ui.view = {};
 
 // NOTICE: Never cache the results of this function. Templates should be repopulated instead if that is the desired effect.
@@ -715,7 +715,7 @@ anje.ui.view.switch = function (viewname, view, target) {
 /**
  * 3.3 Templating
  * -----------------------------------------------------------------------------
-**/
+ */
 anje.ui.template = {};
 
 anje.ui.template._expandTemplate = function ($element, model) {
@@ -944,7 +944,7 @@ anje.ui.template.populate = function ($element, parent_model) {
 /**
  * 3.4 Formatting
  * -----------------------------------------------------------------------------
-**/
+ */
 anje.ui.format = {};
 
 anje.ui.format.string = function (inputString, formatType, options) {
