@@ -698,7 +698,9 @@ anje.ui.view.switch = function (viewname, view, target) {
 		url: anje.appurl + 'ui/themes/' + anje.apptheme + '/views/' + viewToGet, // TODO: update to make use of anje.appurl correctly.
 		cache: false,
 		success: function (data) {
-			jQuery(target).html(data);
+			var $target = jQuery(target);
+			$target.trigger('anje_viewchange');
+			$target.html(data);
 			if (anje.utility.isEmpty(anje.ui.tempdata)) { anje.ui.tempdata = {}; }
 			anje.ui.tempdata.current_view = viewname;
 		},
