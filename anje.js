@@ -18,6 +18,7 @@
 	IMPROVE: Functions which begin with an '_'underscore should be made properly private
 	IMPROVE: Add functionality supporting the sorting of arrays to anje.ui.template._expandTemplate()
 	IMPROVE: Add support to anje.ui.format.string() for additional text formats.
+	IMPROVE: Add support to anje.data.get() for '*' and '?' to work with associative arrays.
 */
 
 /* Table of Contents:
@@ -379,9 +380,10 @@ anje.data.get = function (source_path, data_source) {
 			var a = [];
 			var subpath = path.slice(stepIndex+1).join('.'); // Reassemble the path starting after the '*' star.
 			for (var i = 0; i < data_source.length; i++) {
-				a.push(anje.data.get(subpath, data_source[i]));
+				var subdata = anje.data.get(subpath, data_source[i]);
+				a.push(subdata);
 			}
-			data_source = a;
+			return a;
 		} else {
 			// Otherwise, simply proceed down the path one step.
 			data_source = data_source[step];
