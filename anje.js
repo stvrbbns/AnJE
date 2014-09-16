@@ -133,7 +133,7 @@ anje.utility.parseBool = function(value) {
 
 
 /** prepareTooltips() sets elements with a class of "tooltip" to be tooltips.
- * @param style -- string - optional - what style of tooltips should be set up; jQuery UI if omitted.
+ * @param style -- string - (optional) what style of tooltips should be set up; jQuery UI if omitted.
  */
 anje.utility.prepareTooltips = function (style) {
 	if (style == null || style == undefined) { style = 'jqueryui'; }
@@ -192,6 +192,7 @@ anje.utility.saveTextAsFile = function (textToSave, suggestedFileName) {
  */
 anje.utility.array = {};
 
+
 /** getArrayIndexByKeyValue()
  * @param array -- array - the array of objects to search.
  * @param key -- string - the key which the found object must have.
@@ -212,7 +213,7 @@ anje.utility.array.getArrayIndexByKeyValue = function (array, key, value) {
  * Array Remove - By John Resig (MIT Licensed)
  * @param array -- array - the array to remove elements from.
  * @param from -- integer - the first index to remove.
- * @param to -- integer - the last index to remove.
+ * @param to -- integer - (optional) the last index to remove; same as "from" if omitted (removing a single element).
  * @return integer - the new length of the array.
  */
 anje.utility.array.remove = function (array, from, to) {
@@ -292,8 +293,8 @@ anje.utility.array.toCommaSeparatedList = function (array) {
 anje.utility.math = {};
 
 /** randomInteger() generates a random integer from a specified range.
- * @param max -- integer - optional - high end of the range; 2147483647 if omitted.
- * @param min -- integer - optional - the low end of the range; 0 if omitted.
+ * @param max -- integer - (optional) high end of the range; 2147483647 if omitted.
+ * @param min -- integer - (optional) the low end of the range; 0 if omitted.
  * @return integer - a randomly generated integer bounded by the range.
  */
 anje.utility.math.randomInteger = function (max, min) {
