@@ -237,6 +237,25 @@ anje.utility.array.removeByValue = function (array, value) {
 }; // end anje.utility.array.removeByValue()
 
 
+/** sum() returns the sum of the values given by the key to the objects in the array;
+ *		missing values are ignored (added as 0).
+ * @param array -- array - array of objects to sum from.
+ * @param key -- string - (optional) the key checked in/on each object in the array to get the value(s); each element of the array is used if key is omitted.
+ * @return number -- the sum result.
+ */
+anje.utility.array.sum = function (array, key) {
+	var sum = 0.0;
+	for (var i = array.length - 1; i >= 0; i--) {
+		if(key == undefined && !isNaN(array[i])) {
+			sum += array[i];
+		} else if(array[i][key] != undefined && !isNaN(array[i][key])) {
+			sum += array[i][key];
+		}
+	}
+	return sum;
+}; // end anje.utility.array.sum()
+
+
 /** toCommaSeparatedList() returns the array as a comma separated list.
  * @param array -- array - array of strings
  * @return string - a comma separated list of the array's elements.
