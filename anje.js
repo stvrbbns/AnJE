@@ -419,6 +419,20 @@ anje.utility.object.size = function(obj) {
 }; // end anje.utility.object.size()
 
 
+/** toValuesArray() returns the array of the object's values.
+ * @param obj -- object - the object to be treated as an associative array and have its values returned.
+ * @return array - array of the input object's values.
+ */
+anje.utility.object.toValuesArray = function (obj) {
+	var returnArray = new Array();
+	var keysArray = Object.keys(obj);
+	for (var i = 1; i < keysArray.length; i++) {
+		returnArray.push(obj[keysArray[i]])
+	}
+	return returnArray;
+}; // end anje.utility.object.toValuesArray()
+
+
 
 /**
  * 2.0 Data
