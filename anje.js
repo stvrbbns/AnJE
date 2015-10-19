@@ -209,6 +209,31 @@ anje.utility.array.getArrayIndexByKeyValue = function (array, key, value) {
 }; // end anje.utility.getArrayIndexByKeyValue()
 
 
+/** getValueArrayByKey() returns an array of the values given by the key to the objects in the array;
+ *		missing values are ignored (added as 0).
+ * @param array -- array - array of objects to get values from.
+ * @param key -- string - the key checked in/on each object in the array to get the value(s)
+ * @param missingValue -- var - (optional) the value to insert into the output array if the key is undefined on an object.
+ * @param nanValue -- var - (optional) the value to insert into the output array if the keyed value is defined but is not a number (NaN).
+ * @return number -- the resulting array of values.
+ */
+anje.utility.array.getValueArrayByKey = function (array, key, missingValue, nanValue) {
+	var out = [];
+	for (var i = array.length - 1; i >= 0; i--) {
+		if(array[i][key] != undefined) {
+			if(!isNaN(array[i][key])) {
+				out.push(array[i][key]);
+			} else if (nanValue != undefined) {
+				out.push(nanValue);
+			}
+		} else if (missingValue != undefined) {
+			out.push(missingValue);
+		}
+	}
+	return out;
+}; // end anje.utility.array.getValueArrayByKey()
+
+
 /** remove() removes a contiguous subset of elements from an array by index.
  * Array Remove - By John Resig (MIT Licensed)
  * @param array -- array - the array to remove elements from.
@@ -238,23 +263,29 @@ anje.utility.array.removeByValue = function (array, value) {
 }; // end anje.utility.array.removeByValue()
 
 
-/** sum() returns the sum of the values given by the key to the objects in the array;
- *		missing values are ignored (added as 0).
- * @param array -- array - array of objects to sum from.
- * @param key -- string - (optional) the key checked in/on each object in the array to get the value(s); each element of the array is used if key is omitted.
- * @return number -- the sum result.
+/** shuffle() randomly reorders all elements within an array.
+ *		Taken from http://bost.ocks.org/mike/shuffle/ by Mike Bostock
+ *		Implements the Fisher–Yates shuffle, also known as the Knuth shuffle.
+ * @param array -- array - array to shuffle.
+ * @return array -- the shuffled array. NOTE: The array is already shuffled in place, so this is a convenience for chaining.
  */
-anje.utility.array.sum = function (array, key) {
-	var sum = 0.0;
-	for (var i = array.length - 1; i >= 0; i--) {
-		if(key == undefined && !isNaN(array[i])) {
-			sum += array[i];
-		} else if(array[i][key] != undefined && !isNaN(array[i][key])) {
-			sum += array[i][key];
-		}
-	}
-	return sum;
-}; // end anje.utility.array.sum()
+anje.utility.array.shuffle = function (array) {
+  var m = array.length, t, i;
+
+  // While there remain elements to shuffle…
+  while (m) {
+
+    // Pick a remaining element…
+    i = Math.floor(Math.random() * m--);
+
+    // And swap it with the current element.
+    t = array[m];
+    array[m] = array[i];
+    array[i] = t;
+  }
+
+  return array;
+}; // end anje.utility.array.shuffle()
 
 
 /** toCommaSeparatedList() returns the array as a comma separated list.
@@ -292,6 +323,41 @@ anje.utility.array.toCommaSeparatedList = function (array) {
  */
 anje.utility.math = {};
 
+/** average() returns the average of the values given -- either as an array or as individual arguments.
+ * @param arguments -- arguments - values to average.
+ * @return number -- the averaged result.
+ */
+anje.utility.math.average = function () {
+	var average;
+	if (Array.isArray(arguments[0])) {
+		average = anje.utility.math.sum(arguments[0]) / arguments[0].length;
+	} else {
+		average = anje.utility.math.sum(arguments) / arguments.length;
+	}
+	return isNaN(average) ? NaN : average;
+}; // end anje.utility.math.average()
+
+
+/** product() returns the product of the values given -- either as an array or as individual arguments.
+ * @param arguments -- arguments - values to multiply.
+ * @return number -- the multiplication result.
+ */
+anje.utility.math.product = function () {
+	var product = 1.0;
+	if (Array.isArray(arguments[0])) {
+		var array = arguments[0];
+		for (var i = array.length - 1; i >= 0; i--) {
+			product *= array[i];
+		}
+	} else {
+		for (var i = arguments.length - 1; i >= 0; i--) {
+			product *= arguments[i];
+		}
+	}
+	return isNaN(product) ? NaN : product;
+}; // end anje.utility.math.product()
+
+
 /** randomInteger() generates a random integer from a specified range.
  * @param max -- integer - (optional) high end of the range; 2147483647 if omitted.
  * @param min -- integer - (optional) the low end of the range; 0 if omitted.
@@ -302,6 +368,26 @@ anje.utility.math.randomInteger = function (max, min) {
 	if (min == null || min == undefined) { min = 0; }
 	return Math.floor(Math.random() * (max - min + 1)) + min;
 }; // end anje.utility.math.randomInteger()
+
+
+/** sum() returns the sum of the values given -- either as an array or as individual arguments.
+ * @param arguments -- arguments - values to sum up.
+ * @return number -- the sum result.
+ */
+anje.utility.math.sum = function () {
+	var sum = 0.0;
+	if (Array.isArray(arguments[0])) {
+		var array = arguments[0];
+		for (var i = array.length - 1; i >= 0; i--) {
+			sum += array[i];
+		}
+	} else {
+		for (var i = arguments.length - 1; i >= 0; i--) {
+			sum += arguments[i];
+		}
+	}
+	return isNaN(sum) ? NaN : sum;
+}; // end anje.utility.math.sum()
 
 
 /** valueIsNaN() determines if value is NaN (rather than simply not being a number) and answers as a boolean.
