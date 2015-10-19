@@ -19,6 +19,7 @@
 	IMPROVE: Add functionality supporting the sorting of arrays to anje.ui.template._expandTemplate()
 	IMPROVE: Add support to anje.ui.format.string() for additional text formats.
 	IMPROVE: Add support to anje.data.get() for '*' and '?' to work with associative arrays.
+	IMPROVE: Improve how module dependencies are identified an installed.
 */
 
 /* Table of Contents:
@@ -51,8 +52,7 @@ var appdata = {}; // The root node for all application data.
  * 1.0 Utility
  * -----------------------------------------------------------------------------
  */
- anje.utility = {};
-
+anje.utility = {};
 
 /** isEmpty() takes any variable and returns whether or not it is empty as a boolean.
  * @param variable -- any-type - a variable which may or may not be empty.
@@ -141,11 +141,11 @@ anje.utility.prepareTooltips = function (style) {
 	switch (style) {
 		case 'sticky':
 			jQuery('.tooltip').hide();
-			jQuery('.anje-tooltipped').click(function (event) {
+			jQuery('.anje-tooltipped').off('click').click(function (event) {
 				jQuery(this.nextSibling).toggle();
 				event.stopPropagation();
 			});
-			jQuery('body').click(function (event) {
+			jQuery('body').off('click').click(function (event) {
 				jQuery('.tooltip').hide();
 			});
 			break;
@@ -191,7 +191,6 @@ anje.utility.saveTextAsFile = function (textToSave, suggestedFileName) {
  * -----------------------------------------------------------------------------
  */
 anje.utility.array = {};
-
 
 /** getArrayIndexByKeyValue()
  * @param array -- array - the array of objects to search.
@@ -453,6 +452,7 @@ anje.data = {};
  */
 anje.data.get = function (source_path, data_source) {
 	if (data_source === undefined) { data_source = window; }
+	if (source_path == undefined || source_path == '') { return data_source; }
 	var path = source_path.split('.');
 
 	for (var stepIndex = 0; stepIndex < path.length; stepIndex++) {
@@ -520,8 +520,13 @@ anje.data.get = function (source_path, data_source) {
  */
 anje.data.select = function (objectArray, selectionCriteria) {
 	if (anje.utility.isEmpty(objectArray)) { return []; }
-	var returnArray = new Array().concat(objectArray);
-	var regex_Selector = new RegExp('\\[(?:([^\\]]+)(..)\'([^\']+)\')\\]|\\[(?:([^\\]=\']+))\\]', 'g');
+	var returnArray = new Array();
+	if (!Array.isArray(objectArray)) {
+		returnArray = returnArray.concat(anje.utility.object.toValuesArray(objectArray));
+	} else {
+		returnArray = returnArray.concat(objectArray);
+	}
+	var regex_Selector = new RegExp('\\[(?:([^\\]\']+)(..)\'([^\\]]+)\')\\]|\\[(?:([^\\]\']+))\\]', 'g');
 	var match;
 	while ((match = regex_Selector.exec(selectionCriteria)) !== null) {
 		var attribute = match[1];
@@ -536,7 +541,7 @@ anje.data.select = function (objectArray, selectionCriteria) {
 						i--;
 					}
 					break;
-				case '==':
+				case '==': // equals
 					if (typeof returnArray[i][attribute] === 'number') { value = parseFloat(value); }
 					if (typeof returnArray[i][attribute] === 'boolean') { value = anje.utility.parseBool(value); }
 					if (returnArray[i][attribute] != value) {
@@ -544,7 +549,7 @@ anje.data.select = function (objectArray, selectionCriteria) {
 						i--;
 					}
 					break;
-				case '!=':
+				case '!=': // does not equal
 					if (typeof returnArray[i][attribute] === 'number') { value = parseFloat(value); }
 					if (typeof returnArray[i][attribute] === 'boolean') { value = anje.utility.parseBool(value); }
 					if (returnArray[i][attribute] == value) {
@@ -552,56 +557,62 @@ anje.data.select = function (objectArray, selectionCriteria) {
 						i--;
 					}
 					break;
-				case '^=':
+				case '^=': // starts with
 					var attr = returnArray[i][attribute].toString();
 					if (value.length > attr.length || attr.substring(0,value.length) != value) {
 						anje.utility.array.remove(returnArray, i);
 						i--;
 					}
 					break;
-				case '$=':
+				case '$=': // ends with
 					var attr = returnArray[i][attribute].toString();
 					if (value.length > attr.length || attr.substring(attr.length-value.length) != value) {
 						anje.utility.array.remove(returnArray, i);
 						i--;
 					}
 					break;
-				case '*=':
-					var attr = returnArray[i][attribute].toString();
-					if (attr.indexOf(value) != -1) {
-						anje.utility.array.remove(returnArray, i);
-						i--;
+				case '*=': // contains
+					var attr = returnArray[i][attribute];
+					if (!Array.isArray(attr)) {
+						attr = attr.toString();
 					}
-					break;
-				case '!*':
-					var attr = returnArray[i][attribute].toString();
 					if (attr.indexOf(value) == -1) {
 						anje.utility.array.remove(returnArray, i);
 						i--;
 					}
 					break;
-				case '>>':
+				case '!*': // does not contain
+					var attr = returnArray[i][attribute];
+					if (!Array.isArray(attr)) {
+						attr = attr.toString();
+					}
+					if (attr.indexOf(value) != -1) {
+						anje.utility.array.remove(returnArray, i);
+						i--;
+					}
+					break;
+				case '>>': // is more than
 					value = parseFloat(value);
 					if (returnArray[i][attribute] <= value) {
 						anje.utility.array.remove(returnArray, i);
 						i--;
 					}
 					break;
-				case '>=':
+				case '>=': // is more than or equal to
 					value = parseFloat(value);
 					if (returnArray[i][attribute] < value) {
 						anje.utility.array.remove(returnArray, i);
 						i--;
 					}
 					break;
-				case '<<':
+				case '<<': // is less than
 					value = parseFloat(value);
 					if (returnArray[i][attribute] >= value) {
 						anje.utility.array.remove(returnArray, i);
 						i--;
 					}
 					break;
-				case '<=':
+				case '<=': // is less than or equal to
 					value = parseFloat(value);
 					if (returnArray[i][attribute] > value) {
 						anje.utility.array.remove(returnArray, i);
@@ -629,7 +640,7 @@ anje.data.class.newObject = function (objectClass, options, initData) {
 	if (options == undefined) { options = {}; }
 	var o = new appdata.class[objectClass](options);
 	if (!anje.utility.isEmpty(initData)) {
-		$.extend(true, o, initData);
+		jQuery.extend(true, o, initData);
 	}
 	return o;
 }; // end anje.data.class.newObject()
@@ -679,11 +690,16 @@ anje.data.module.install = function (moduleURL) {
 	var moduleObject = null;
 	jQuery.get(moduleURL, null, function (moduleData) {
 		// TODO: Validate the module.json ?
+		if (anje.utility.isEmpty(moduleData.url)) {
+			moduleData.url = moduleURL;
+		}
+		if (anje.utility.isEmpty(moduleData.contentDirectoryUrl)) {
+			moduleData.contentDirectoryUrl = moduleData.url.substring(0,moduleData.url.lastIndexOf('/'));
+		}
+		if (anje.utility.isEmpty(moduleData.supportingModulesRootUrl)) {
+			moduleData.supportingModulesRootUrl = moduleData.url.substring(0,moduleData.url.lastIndexOf('/'));
+		}
 		moduleObject = anje.data.class.newObject(moduleData.protoclass, null, moduleData);
-
-		// TODO: account for module dependencies; install them first
-		//window.appdata.module.loadDependencies();
-
 		moduleObject.install();
 	}, 'json');
 	return moduleObject;
@@ -721,7 +737,7 @@ anje.data.module.getFromEncyclopedia = function (path, targetObject) {
 		return anje.data.class.loadObject(content);
 	}
 	if (!anje.utility.isEmpty(content)) {
-		$.extend(true, targetObject, anje.data.class.loadObject(content));
+		jQuery.extend(true, targetObject, anje.data.class.loadObject(content));
 	}
 	return targetObject;
 }; // end anje.data.module.getFromEncyclopedia()
@@ -736,15 +752,21 @@ anje.data.module.getFromEncyclopedia = function (path, targetObject) {
 /*** Module - Constructor ***/
 appdata.class.Module = function () {
 	this.__defineGetter__('protoclass', function () { return 'Module'; });
-	this.module_dependencies = []; // String - module names
 	this.name = '';
 	this.directoryName = '';
-	this.content = {}; // associative array structure of content to add to the appdata.encyclopedia
+	this.url = ''; // String - URL this module came from.
+	this.contentDirectoryUrl = ''; // String - URL of the directory this module's content can reference (e.g. for images).
+	this.supportingModulesRootUrl = ''; // String - URL to prepend to each supporting module to retrieve/install it.
+	this.moduleDependencies = []; // String - supporting module names.
+	this.content = {}; // Associative array - structure of content to add to the appdata.encyclopedia when this module is installed.
 }; // end constructor() qis.class.Module
 
 /*** Module - Functions & Methods ***/
 
 appdata.class.Module.prototype.install = function (target) {
+	// Account for module dependencies; install them first.
+	this.installDependencies();
+
 	// Do not double-install modules.
 	if (appdata.installedModules.indexOf(this.name) != -1) {
 		console.log('Module "' + this.name + '" is already installed.');
@@ -754,6 +776,14 @@ appdata.class.Module.prototype.install = function (target) {
 	anje.data.module.addToEncyclopedia(this.content, target);
 	appdata.installedModules.push(this.name);
 }; // end qis.class.Module.prototype.install()
+
+appdata.class.Module.prototype.installDependencies = function (Dependencies) {
+	for (var i = 0; i < this.moduleDependencies.length; i++) {
+		if (appdata.installedModules.indexOf(this.name) == -1) {
+			anje.data.module.install(this.supportingModulesRootUrl + '' + this.moduleDependencies[i]);
+		}
+	}
+}; // end qis.class.Module.prototype.installDependencies()
 
 
 
@@ -781,7 +811,8 @@ anje.ui.crossbrowser.requestFullscreen = function () {
 	} else if (document.documentElement.webkitRequestFullscreen) {
 		document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
 	}
-} // end anje.ui.crossbrowser.requestFullscreen()
+}; // end anje.ui.crossbrowser.requestFullscreen()
+
 anje.ui.crossbrowser.exitFullscreen = function () {
 	if (document.exitFullscreen) {
 		document.exitFullscreen();
@@ -792,7 +823,8 @@ anje.ui.crossbrowser.exitFullscreen = function () {
 	} else if (document.webkitExitFullscreen) {
 		document.webkitExitFullscreen();
 	}
-} // end anje.ui.crossbrowser.exitFullscreen()
+}; // end anje.ui.crossbrowser.exitFullscreen()
+
 anje.ui.crossbrowser.toggleFullScreen = function () {
 	if (!document.fullscreenElement &&        // alternative standard method
 			!document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement ) {    // current working methods
@@ -800,7 +832,7 @@ anje.ui.crossbrowser.toggleFullScreen = function () {
 	} else {
 		anje.ui.crossbrowser.exitFullscreen();
 	}
-} // end anje.ui.crossbrowser.toggleFullScreen()
+}; // end anje.ui.crossbrowser.toggleFullScreen()
 
 
 
@@ -1085,7 +1117,7 @@ anje.ui.format.string = function (inputString, formatType, options) {
 			outputString = outputString.replace(new RegExp('<s>(.+)</s>', 'g'), '<span style="text-decoration:line-through;">$1</span>');
 			outputString = outputString.replace(new RegExp('<u>(.+)</u>', 'g'), '<span style="text-decoration:underline;">$1</span>');
 
-			// Format tooltips for HTML; turns [|1||text|] into <sup>1</sup><span>text</span>
+			// Format tooltips for HTML; turns [|1||text|] into <span>1</span><span>text</span>
 			var c = '(?:[^|]|\|(?!\|))'; // A character which is not a pipe, or is a pipe without a consecutive pipe (not followed by another pipe).
 			outputString = outputString.replace(new RegExp('\\[\\|('+c+'+)\\|\\|('+c+'+)\\|\\]', 'g'), '<span class="anje-tooltipped">$1</span><span class="tooltip ui-tooltip ui-widget ui-corner-all ui-widget-content" style="display:none;">$2</span>');
 
