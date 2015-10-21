@@ -31,7 +31,7 @@
 		2.1 Data Access
 		2.2 Protoclassing
 		2.3 Modularization
-			2.3.1 Module class
+			2.3.1 _Module class
 	3.0 UI
 		3.1 Cross Browser
 		3.2 View Management
@@ -750,8 +750,8 @@ anje.data.module.getFromEncyclopedia = function (path, targetObject) {
  */
 
 /*** Module - Constructor ***/
-appdata.class.Module = function () {
-	this.__defineGetter__('protoclass', function () { return 'Module'; });
+appdata.class._Module = function () {
+	this.__defineGetter__('protoclass', function () { return '_Module'; });
 	this.name = '';
 	this.directoryName = '';
 	this.url = ''; // String - URL this module came from.
@@ -763,7 +763,7 @@ appdata.class.Module = function () {
 
 /*** Module - Functions & Methods ***/
 
-appdata.class.Module.prototype.install = function (target) {
+appdata.class._Module.prototype.install = function (target) {
 	// Account for module dependencies; install them first.
 	this.installDependencies();
 
@@ -775,15 +775,15 @@ appdata.class.Module.prototype.install = function (target) {
 	// Extend the active application encyclopedia with the contents of this Module.
 	anje.data.module.addToEncyclopedia(this.content, target);
 	appdata.installedModules.push(this.name);
-}; // end qis.class.Module.prototype.install()
+}; // end qis.class._Module.prototype.install()
 
-appdata.class.Module.prototype.installDependencies = function (Dependencies) {
+appdata.class._Module.prototype.installDependencies = function (Dependencies) {
 	for (var i = 0; i < this.moduleDependencies.length; i++) {
 		if (appdata.installedModules.indexOf(this.name) == -1) {
 			anje.data.module.install(this.supportingModulesRootUrl + '' + this.moduleDependencies[i]);
 		}
 	}
-}; // end qis.class.Module.prototype.installDependencies()
+}; // end qis.class._Module.prototype.installDependencies()
 
 
 
