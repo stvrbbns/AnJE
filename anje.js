@@ -40,12 +40,35 @@
 * -----------------------------------------------------------------------------
 */
 
+
+
+
+
+(function (global, factory) {
+	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+	typeof define === 'function' && define.amd ? define(factory) :
+	global.appdata = factory();
+}(this, function () {
+	appdata = {}; // The root node for all application data.
+	appdata.class = {}; // Associative array of protoclasses
+	appdata.encyclopedia = {}; // The root node all Module content is installed into.
+	appdata.installedModules = []; // String array naming all installed modules.
+	return appdata;
+})); // The root node for all application data.
+
+
+
+
+
+(function (global, factory) {
+	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+	typeof define === 'function' && define.amd ? define(factory) :
+	global.anje = factory();
+}(this, function () {
+
 var anje = {};
 anje.appurl = '/';
 anje.apptheme = 'theme';
-
-var appdata = {}; // The root node for all application data.
-
 
 
 /**
@@ -186,6 +209,7 @@ anje.utility.saveTextAsFile = function (textToSave, suggestedFileName) {
 }; // end anje.utility.saveTextAsFile()
 
 
+
 /**
  * 1.1 Array Utilities
  * -----------------------------------------------------------------------------
@@ -314,6 +338,7 @@ anje.utility.array.toCommaSeparatedList = function (array) {
 	};
 	return csl;
 }; // end anje.utility.array.toCommaSeparatedList()
+
 
 
 /**
@@ -634,7 +659,6 @@ anje.data.select = function (objectArray, selectionCriteria) {
  * -----------------------------------------------------------------------------
  */
 anje.data.class = {};
-appdata.class = {}; // associative array of protoclasses
 
 anje.data.class.newObject = function (objectClass, options, initData) {
 	if (options == undefined) { options = {}; }
@@ -645,31 +669,51 @@ anje.data.class.newObject = function (objectClass, options, initData) {
 	return o;
 }; // end anje.data.class.newObject()
 
-anje.data.class.loadObject = function (objectInfo) {
-	if (typeof objectInfo === 'function' || typeof objectInfo === 'boolean' || typeof objectInfo === 'number' || typeof objectInfo === 'string') {
-		return objectInfo;
-	} else if (anje.utility.isEmpty(objectInfo)) {
-		return objectInfo;
-	} else if (Array.isArray(objectInfo)) {
+anje.data.class.loadObject = function (objectData) {
+	if (typeof objectData === 'function' || typeof objectData === 'boolean' || typeof objectData === 'number' || typeof objectData === 'string') {
+		return objectData;
+	} else if (anje.utility.isEmpty(objectData)) {
+		return objectData;
+	} else if (Array.isArray(objectData)) {
 		var returnObject = [];
-		for (var i = 0; i < objectInfo.length; i++) {
-			returnObject.push(anje.data.class.loadObject(objectInfo[i]));
+		for (var i = 0; i < objectData.length; i++) {
+			returnObject.push(anje.data.class.loadObject(objectData[i]));
 		};
 		return returnObject;
 	} else { // This must be a non-array Object.
-		var loadedObjectInfo = {};
-		for (var property in objectInfo) {
+		var loadedObjectData = {};
+		for (var property in objectData) {
 			if (property == 'protoclass' || property == '_options') { continue; } // skip the protoclass and initialization options for protoclassed objects
 			if (property == '_comment' || property == '_comments') { continue; } // skip internal comments
-			loadedObjectInfo[property] = anje.data.class.loadObject(objectInfo[property]);
+			loadedObjectData[property] = anje.data.class.loadObject(objectData[property]);
 		}
-		if (anje.utility.isEmpty(objectInfo.protoclass)) {
-			return loadedObjectInfo;
+		if (anje.utility.isEmpty(objectData.protoclass)) {
+			return loadedObjectData;
 		} else {
-			return anje.data.class.newObject(objectInfo.protoclass, objectInfo._options, loadedObjectInfo);
+			return anje.data.class.newObject(objectData.protoclass, objectData._options, loadedObjectData);
 		}
 	}
 }; // end anje.data.class.loadObject()
+
+/** dataOnly() returns an input object with only its values, stripped of all functions; useful for storage
+ * @param obj -- object - the object
+ * @return object - a copy of the object without functions
+ */
+anje.data.class.objectToData = function(obj) {
+	/*var objectData = {};
+	for (key in obj) {
+		if (obj.hasOwnProperty(key)) {
+			switch (typeof(obj(key))) {
+				case "string":
+				case "number":
+				case "boolean":
+					objectData(key) = obj(key);
+					break;
+			}
+		}
+	}*/
+	return JSON.parse(JSON.stringify(obj));
+}; // end anje.utility.object.dataOnly()
 
 
 
@@ -678,8 +722,6 @@ anje.data.class.loadObject = function (objectInfo) {
  * -----------------------------------------------------------------------------
  */
 anje.data.module = {};
-appdata.encyclopedia = {}; // The root node all Module content is installed into.
-appdata.installedModules = []; // String array naming all installed modules.
 
 anje.data.module.resetApp = function () {
 	appdata.encyclopedia = {};
@@ -1126,3 +1168,8 @@ anje.ui.format.string = function (inputString, formatType, options) {
 	}
 	throw 'ERROR: invalid formatType specified to anje.ui.format.string().'
 }; // end anje.ui.format.string()
+
+
+
+return anje;
+}));
