@@ -110,7 +110,7 @@ anje.utility.isEmpty = function (variable) {
 
 
 /** makeGetterFunction()
- * @param val -- string - .
+ * @param val -- var - value to be returned by the getter function.
  */
 anje.utility.makeGetterFunction = function (val) {
   return function() { return val; };
