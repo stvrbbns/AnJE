@@ -186,26 +186,26 @@ anje.utility.prepareTooltips = function (style) {
  * @param suggestedFileName -- string - (optional) a suggested name to save the text file as.
  */
 anje.utility.saveTextAsFile = function (textToSave, suggestedFileName) {
-    var textFileAsBlob = new Blob([textToSave], {type:'text/plain'});
-    if (utilityJS.isEmpty(suggestedFileName)) { suggestedFileName = ''; }
+  var textFileAsBlob = new Blob([textToSave], {type:'text/plain'});
+  if (utilityJS.isEmpty(suggestedFileName)) { suggestedFileName = ''; }
 
-    var downloadLink = document.createElement('a');
-    downloadLink.download = suggestedFileName;
-    downloadLink.innerHTML = 'Download File';
-    if (window.webkitURL != null) {
-        // Chrome allows the link to be clicked
-        // without actually adding it to the DOM.
-        downloadLink.href = window.webkitURL.createObjectURL(textFileAsBlob);
-    } else {
-        // Firefox requires the link to be added to the DOM
-        // before it can be clicked.
-        downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
-        downloadLink.onclick = function () { this.remove(); };
-        downloadLink.style.display = 'none';
-        document.body.appendChild(downloadLink);
-    }
+  var downloadLink = document.createElement('a');
+  downloadLink.download = suggestedFileName;
+  downloadLink.innerHTML = 'Download File';
+  if (window.webkitURL != null) {
+      // Chrome allows the link to be clicked
+      // without actually adding it to the DOM.
+      downloadLink.href = window.webkitURL.createObjectURL(textFileAsBlob);
+  } else {
+      // Firefox requires the link to be added to the DOM
+      // before it can be clicked.
+      downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
+      downloadLink.onclick = function () { this.remove(); };
+      downloadLink.style.display = 'none';
+      document.body.appendChild(downloadLink);
+  }
 
-    downloadLink.click();
+  downloadLink.click();
 }; // end anje.utility.saveTextAsFile()
 
 
